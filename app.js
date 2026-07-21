@@ -4,6 +4,12 @@ const API =
   'https://anycors.sirstoke.me/' +
   'https://postgrest.sirstoke.me/map_annotations';
 
+const TALE_VIDEO = 'https://www.youtube.com/watch?v=CrcdZyqoDkc';
+const sourceAt = (timestamp, seconds) => ({
+  label: `Tale Overwatch · ${timestamp}`,
+  url: `${TALE_VIDEO}&t=${seconds}s`
+});
+
 // Add another object for each map revision, hero, and mode combination.
 const annotationSets = [
   {
@@ -16,14 +22,42 @@ const annotationSets = [
     modeId: 'attack',
     modeName: 'Attack',
     tasks: [
-      ['a-main-entry', 'Click the Point A main entrance/choke.'],
-      ['a-left-mega-door', 'Click the left-side doorway used to poke Sigma out of the choke.'],
-      ['a-left-mega-pack', 'Click the mega health pack on the bottom-left staircase route.'],
-      ['a-right-rotation-entry', 'Click where Cassidy leaves main to begin the right-side rotation.'],
-      ['a-right-high-ground', 'Click the right-side high ground reached by stairs or roll tech.'],
-      ['a-roll-tech-landing', 'Click the roll-tech landing point on the right-side high ground.'],
-      ['a-right-mega-entry', 'Click the entrance to the right-side mega-room flank.'],
-      ['a-right-mega-exit', 'Click where the right-side mega-room flank exits into the fight.']
+      ['a-main-entry', 'Click the Point A main entrance/choke.', sourceAt('2:12:53', 7973)],
+      [
+        'a-left-mega-door',
+        'Click the left-side doorway used to poke Sigma out of the choke.',
+        sourceAt('2:27:40', 8860)
+      ],
+      [
+        'a-left-mega-pack',
+        'Click the mega health pack on the bottom-left staircase route.',
+        sourceAt('2:13:05', 7985)
+      ],
+      [
+        'a-right-rotation-entry',
+        'Click where Cassidy leaves main to begin the right-side rotation.',
+        sourceAt('2:13:54', 8034)
+      ],
+      [
+        'a-right-high-ground',
+        'Click the right-side high ground reached by stairs or roll tech.',
+        sourceAt('2:14:00', 8040)
+      ],
+      [
+        'a-roll-tech-landing',
+        'Click the roll-tech landing point on the right-side high ground.',
+        sourceAt('2:14:07', 8047)
+      ],
+      [
+        'a-right-mega-entry',
+        'Click the entrance to the right-side mega-room flank.',
+        sourceAt('2:15:05', 8105)
+      ],
+      [
+        'a-right-mega-exit',
+        'Click where the right-side mega-room flank exits into the fight.',
+        sourceAt('2:15:19', 8119)
+      ]
     ]
   }
 ];
@@ -34,6 +68,7 @@ const ui = {
   mode: document.querySelector('#mode-select'),
   progress: document.querySelector('#progress'),
   prompt: document.querySelector('#task-prompt'),
+  source: document.querySelector('#task-source'),
   stage: document.querySelector('#map-stage'),
   image: document.querySelector('#map-image'),
   marker: document.querySelector('#marker'),
@@ -114,9 +149,11 @@ function updateControls() {
 }
 
 function renderTask() {
-  const [taskId, prompt] = activeSet.tasks[taskIndex];
+  const [taskId, prompt, source] = activeSet.tasks[taskIndex];
   ui.progress.textContent = `Point ${taskIndex + 1} of ${activeSet.tasks.length}`;
   ui.prompt.textContent = prompt;
+  ui.source.href = source.url;
+  ui.source.textContent = `Watch source at ${source.label}`;
   showMarker(savedPoints.get(taskId));
   updateControls();
 }

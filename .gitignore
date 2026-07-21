@@ -1,0 +1,12 @@
+# Local environments and secret-bearing configuration
+.env
+.env.*
+!.env.example
+.direnv/
+.venv/
+venv/
+
+# Local Python and operating-system artifacts
+__pycache__/
+*.py[cod]
+.DS_Store

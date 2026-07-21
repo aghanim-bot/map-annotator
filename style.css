@@ -86,9 +86,22 @@ select {
 }
 
 .task-panel h2 {
-  margin-bottom: 0;
+  margin-bottom: 0.45rem;
   font-size: clamp(1.1rem, 3vw, 1.45rem);
   line-height: 1.4;
+}
+
+.task-source {
+  color: #446173;
+  font-size: 0.82rem;
+  text-underline-offset: 0.18em;
+}
+
+.task-source:hover { color: #173f57; }
+
+.task-source:focus-visible {
+  outline: 3px solid rgb(19 96 143 / 35%);
+  outline-offset: 2px;
 }
 
 .map-frame {
