@@ -1056,6 +1056,17 @@ All evidence types are **spoken candidate**. All phases are **unresolved pending
 - Chapter: Grom - Gold - Paraiso
 - Chapter bounds: `570.64`–`5567.6` seconds (9:30.64–1:32:47.6)
 
+Local visual-review bundle: three exact source clips and three 8-frame contact sheets for timestamps around the three candidates were saved outside the repository at `/opt/data/annotated-maps/paraiso-cassidy/evidence-clips/`.
+
+- `intro.mkv` — SHA-256 `ef3a51977ecaf0bf7e1fd5ea078df86d5b9b91d0bba90a92b03592b8cfdf94ec`
+- `intro-contact.jpg` — SHA-256 `52341f8d9f2b7e34962c98fcae766ba83aff4e96a0d8f4526b62cb5c40250823`
+- `attack-route.mkv` — SHA-256 `f8d5f408116527602507b07258cf89867ad2201502b452192f46d9b340c85b9a`
+- `attack-route-contact.jpg` — SHA-256 `ab78be6e3f9f0249828ecf9daf1c55e18ecb0a530d5adc5447201c6558b57b8a`
+- `bridge-route.mkv` — SHA-256 `e4f7670f42d5c226c7ec79692edcff3deed74285ba1a9236ec5b075fccd66704`
+- `bridge-route-contact.jpg` — SHA-256 `84ad92922bc276fed4f438d944c29718b0120e4e940d2b8e5f7bb40485e56d86`
+
+Checksum/download verification is complete, but the frames remain unreviewed; all three rows therefore retain spoken-candidate/unresolved status.
+
 ### Candidate 1
 
 - Timestamp: [`1074.32`](https://www.youtube.com/watch?v=D7YhHung_Fg&t=1074.32s)
