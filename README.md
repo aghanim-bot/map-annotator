@@ -20,6 +20,32 @@ https://anycors.sirstoke.me/https://postgrest.sirstoke.me/map_annotations
 
 The PostgREST `map_annotations` table and its `web_anon` select/insert/update grants must already exist as described in the approved plan.
 
+## Deploy
+
+Install the versioned deployment script from the repository root. This SSH command copies it directly to the path used by the `hermes-media` account on `daedalus`:
+
+```sh
+ssh hermes-media@daedalus 'install -m 0755 /dev/stdin /var/data/static/update-map-annotator.sh' < deploy/update-static.sh
+```
+
+Run a deployment non-interactively over SSH with:
+
+```sh
+ssh hermes-media@daedalus '/var/data/static/update-map-annotator.sh'
+```
+
+An autonomous runner such as cron or a service timer should invoke the same absolute command, with no working-directory setup required:
+
+```sh
+/var/data/static/update-map-annotator.sh
+```
+
+The script defaults to the public `main` branch of `https://github.com/aghanim-bot/map-annotator.git`. It keeps its locked checkout in `/var/data/static/.deploy/map-annotator` and publishes only `index.html`, `style.css`, `app.js`, `maps/`, and `renders/` when that directory exists. The public `/var/data/static/map-annotator` directory is not a Git checkout, and unrelated files there are left in place. Override a deployment explicitly with environment variables, for example:
+
+```sh
+STATIC_ROOT=/srv/static REPO_URL=https://github.com/aghanim-bot/map-annotator.git BRANCH=main /var/data/static/update-map-annotator.sh
+```
+
 ## Add annotation sets
 
 Add map assets under `maps/`, then add an object to `annotationSets` in `app.js`. Each map revision, hero, and mode combination needs stable IDs and at least one prompt. Increment `mapVersion` whenever the map image or geometry changes; saved coordinates are loaded only for an exact map ID, map version, hero, and mode match.
