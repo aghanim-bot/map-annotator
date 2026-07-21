@@ -65,6 +65,16 @@ The 18 candidate responses represented in the source manifest were downloaded on
 
 Download, checksum, and format verification do **not** make any candidate production-approved. Geometry/map-version review and licensing clearance remain pending for every staged candidate. These files have not been copied into `map-annotator` and are not wired to `app.js`.
 
+## Licensing findings
+
+The separately downloaded [Liquipedia Commons file page for Busan Top Down View](https://liquipedia.net/commons/File:Busan_Top_Down_View.jpg) identifies the file description as “Top down view of Overwatch maps,” names Statbanana as the author, gives `https://statbanana.com/images` as the source, and states: “This file is copyrighted, but used with permission of the rights holder.” The saved page response has SHA-256 `bb3552f7faaf599bbcf6f7573db6317735c5b4ab3024e305683c6fe7331b5a0a`.
+
+This is representative provenance for the 15-file 2020 Statbanana legacy set; it is not a claim that every file page in that set was individually checked. Permission granted to Liquipedia does not establish permission for this project. Accordingly, none of those 15 legacy files may be published unless this project obtains rights-holder permission or identifies an explicit reusable license that covers the intended use.
+
+The separately downloaded Liquipedia Commons file pages for New Junk City and Suravasa state that the files are owned by Blizzard and used under linked Blizzard guidelines. Their saved page responses have SHA-256 `c67c0dc7be0c98af730705c076fe123844f4445b08ce84e898c88969aeae4042` and `ee76a616c51d50e5006327317ef67b3c2816d93532321b277d2645cb74957866`, respectively. The pages' old `http://blizzard.com/company/about/legal-faq.html` link currently redirects to [Blizzard Legal](https://www.blizzard.com/en-us/legal); the saved response for that destination has SHA-256 `9dcc247c38fec85844b01fb1817d08cf46e8c3a4e3732f96db3ae00dee5fca52`. That destination does not itself establish an explicit reusable image license, so both files remain blocked from publication pending confirmation under a current policy or direct permission.
+
+All local or operator staging described in this audit is research-only. Possession of a downloaded response, a verified checksum, or a locally staged image is not authorization to publish it.
+
 ## Rejected material
 
 - Loading-screen art and ordinary perspective screenshots from map galleries are not coordinate bases.
