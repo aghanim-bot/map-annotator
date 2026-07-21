@@ -42,8 +42,8 @@ const annotationSets = [
         youtubeSourceAt('2:27:45', 8865)
       ],
       [
-        'a-left-mega-pack',
-        'Click the mega health pack at the top of the bottom-left stairs.',
+        'a-left-mega-room-entry',
+        'Click the bottom-left staircase leading into the mega room.',
         youtubeSourceAt('2:13:05', 7985)
       ],
       [
@@ -64,7 +64,7 @@ const annotationSets = [
       ],
       [
         'a-roll-tech-landing',
-        'Click the roll-tech landing point on the right-side high ground.',
+        'Click the roll-tech destination on the right-side high ground.',
         youtubeSourceAt('2:14:07', 8047)
       ],
       [
@@ -73,8 +73,8 @@ const annotationSets = [
         youtubeSourceAt('2:15:05', 8105)
       ],
       [
-        'a-right-mega-exit',
-        'Click where the right-side mega flank exits behind Point A.',
+        'a-right-mega-flank',
+        'Click the mega-flank position reached after dropping down the stairs.',
         youtubeSourceAt('2:15:08', 8108)
       ]
     ]

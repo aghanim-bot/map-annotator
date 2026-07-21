@@ -56,7 +56,7 @@ The migration is transactional and idempotent. It adds `points`, converts each l
 
 ## Annotation tasks
 
-Add map assets under `maps/`, then add an object to `annotationSets` in `app.js`. Each map revision, hero, and mode combination needs stable IDs and at least one prompt. Increment `mapVersion` whenever the map image or geometry changes; saved coordinates are loaded only for an exact map ID, map version, hero, and mode match.
+Add map assets under `maps/`, then add an object to `annotationSets` in `app.js`. Each map revision, hero, and mode combination needs stable IDs and at least one prompt. Every prompt must be limited to what its cited transcript and visual evidence establish and recorded in [docs/source-audit.md](docs/source-audit.md). Change a task ID when the evidence changes its semantic target so incompatible saved annotations cannot carry over. Increment `mapVersion` whenever the map image or geometry changes; saved coordinates are loaded only for an exact map ID, map version, hero, and mode match.
 
 Existing three-value task tuples default to a point annotation:
 
@@ -72,7 +72,7 @@ Route tasks opt in with optional metadata:
 
 Point clicks save immediately and advance. Route clicks append ordered waypoints to a local draft. `Undo last` changes only that draft, and nothing is persisted until `Save route` is pressed with at least `minPoints` waypoints. Navigating back to a saved route loads an editable copy.
 
-The included `a-right-rotation-route` prompt documents the right-side Point A rotation and links to the source video at `2:13:54`. All original point task IDs remain unchanged.
+The included `a-right-rotation-route` prompt documents the right-side Point A rotation and links to the source video at `2:13:54`.
 
 The source map is copied without transformation as `maps/blizzard-world-2025-11-18.webp` (SHA-256: `adb3bd467550a0ffcfce319c054dca2c3b8dd1c0e3171159cf12e6f2e16ecbd3`).
 
