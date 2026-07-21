@@ -56,6 +56,10 @@ The migration is transactional and idempotent. It adds `points`, converts each l
 
 ## Annotation tasks
 
+### Staged Competitive catalog
+
+[`data/competitive-catalog.js`](data/competitive-catalog.js) contains 1,368 date-stamped prompts for the Competitive Role Queue 5v5 scope as of 2026-07-21. These prompts are collection scaffolding, not researched spot recommendations or live audited prompts. The catalog is data-only and available to dependency-free browser and CommonJS consumers; it is not connected to `app.js` or the live interface. Only prompts and map assets that have been audited may be wired into the live UI.
+
 Add map assets under `maps/`, then add an object to `annotationSets` in `app.js`. Each map revision, hero, and mode combination needs stable IDs and at least one prompt. Every prompt must be limited to what its cited transcript and visual evidence establish and recorded in [docs/source-audit.md](docs/source-audit.md). Change a task ID when the evidence changes its semantic target so incompatible saved annotations cannot carry over. Increment `mapVersion` whenever the map image or geometry changes; saved coordinates are loaded only for an exact map ID, map version, hero, and mode match.
 
 Existing three-value task tuples default to a point annotation:
