@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Fetch public map annotations and render deterministic markers over a map copy."""
+"""Fetch public map annotations and render deterministic points and routes."""
 
 from __future__ import annotations
 
@@ -22,6 +22,8 @@ DEFAULT_OUTPUT = REPOSITORY_ROOT / "renders" / "blizzard-world-cassidy-attack.pn
 DEFAULT_MAP_SHA256 = "adb3bd467550a0ffcfce319c054dca2c3b8dd1c0e3171159cf12e6f2e16ecbd3"
 MARKER_FILL = (226, 38, 54)
 MARKER_RADIUS = 16
+ROUTE_FILL = (255, 210, 74)
+ROUTE_OUTLINE = (23, 28, 33)
 
 
 def parse_args() -> argparse.Namespace:
@@ -58,7 +60,7 @@ def fetch_rows(args: argparse.Namespace) -> list[dict[str, Any]]:
             "map_version": f"eq.{args.map_version}",
             "hero_id": f"eq.{args.hero_id}",
             "mode_id": f"eq.{args.mode_id}",
-            "select": "task_id,x,y",
+            "select": "task_id,points",
             "order": "task_id.asc",
         }
     )
@@ -68,6 +70,12 @@ def fetch_rows(args: argparse.Namespace) -> list[dict[str, Any]]:
     )
     with urlopen(request, timeout=30) as response:
         payload = json.load(response)
+
+    return parse_rows(payload)
+
+
+def parse_rows(payload: Any) -> list[dict[str, Any]]:
+    """Validate PostgREST JSONB rows and preserve each route's waypoint order."""
 
     if not isinstance(payload, list):
         raise ValueError("PostgREST response must be a JSON array")
@@ -84,22 +92,48 @@ def fetch_rows(args: argparse.Namespace) -> list[dict[str, Any]]:
             raise ValueError(f"duplicate task_id in response: {task_id}")
         task_ids.add(task_id)
 
-        x = float(raw_row.get("x"))
-        y = float(raw_row.get("y"))
-        if not math.isfinite(x) or not math.isfinite(y) or not (0 <= x <= 1 and 0 <= y <= 1):
-            raise ValueError(f"coordinates for {task_id} must be finite values from 0 through 1")
-        rows.append({"task_id": task_id, "x": x, "y": y})
+        raw_points = raw_row.get("points")
+        if not isinstance(raw_points, list) or not raw_points:
+            raise ValueError(f"points for {task_id} must be a non-empty array")
+
+        points: list[dict[str, float]] = []
+        for raw_point in raw_points:
+            if not isinstance(raw_point, dict) or set(raw_point) != {"x", "y"}:
+                raise ValueError(f"every waypoint for {task_id} must contain only x and y")
+            if any(
+                isinstance(raw_point[axis], bool)
+                or not isinstance(raw_point[axis], (int, float))
+                for axis in ("x", "y")
+            ):
+                raise ValueError(f"coordinates for {task_id} must be numbers")
+            try:
+                x = float(raw_point["x"])
+                y = float(raw_point["y"])
+            except (OverflowError, ValueError) as error:
+                raise ValueError(f"coordinates for {task_id} must be finite") from error
+            if not math.isfinite(x) or not math.isfinite(y) or not (0 <= x <= 1 and 0 <= y <= 1):
+                raise ValueError(
+                    f"coordinates for {task_id} must be finite values from 0 through 1"
+                )
+            points.append({"x": x, "y": y})
+        rows.append({"task_id": task_id, "points": points})
 
     return sorted(rows, key=lambda row: row["task_id"])
 
 
-def pixel_point(row: dict[str, Any], width: int, height: int) -> tuple[int, int]:
-    return round(row["x"] * (width - 1)), round(row["y"] * (height - 1))
+def pixel_point(point: dict[str, float], width: int, height: int) -> tuple[int, int]:
+    return round(point["x"] * (width - 1)), round(point["y"] * (height - 1))
 
 
 def draw_legend(image: Image.Image, rows: list[dict[str, Any]], font: ImageFont.ImageFont) -> None:
     draw = ImageDraw.Draw(image, "RGBA")
-    entries = ["LIVE ANNOTATIONS"] + [f"{number}  {row['task_id']}" for number, row in enumerate(rows, 1)]
+    entries = ["LIVE ANNOTATIONS"]
+    for number, row in enumerate(rows, 1):
+        point_count = len(row["points"])
+        if point_count == 1:
+            entries.append(f"{number}  {row['task_id']}")
+        else:
+            entries.append(f"R{number}  {row['task_id']} ({point_count} waypoints)")
     padding = 10
     line_height = 19
     text_width = max(draw.textbbox((0, 0), entry, font=font)[2] for entry in entries)
@@ -117,38 +151,89 @@ def draw_legend(image: Image.Image, rows: list[dict[str, Any]], font: ImageFont.
         draw.text((10 + padding, 10 + padding + line * line_height), entry, font=font, fill=color)
 
 
-def draw_markers(
+def draw_annotations(
     image: Image.Image,
     rows: list[dict[str, Any]],
     marker_font: ImageFont.ImageFont,
-) -> list[tuple[str, int, int]]:
+) -> list[tuple[str, int, int, int]]:
     width, height = image.size
     draw = ImageDraw.Draw(image)
-    points: list[tuple[str, int, int]] = []
-    for number, row in enumerate(rows, 1):
-        x, y = pixel_point(row, width, height)
-        points.append((row["task_id"], x, y))
-        radius = MARKER_RADIUS
-        draw.ellipse(
-            (x - radius - 3, y - radius - 3, x + radius + 3, y + radius + 3),
-            fill=(23, 28, 33),
+    pixel_rows = [
+        (row, [pixel_point(point, width, height) for point in row["points"]])
+        for row in rows
+    ]
+
+    for _, route in pixel_rows:
+        if len(route) > 1:
+            draw.line(route, fill=ROUTE_OUTLINE, width=9, joint="curve")
+            draw.line(route, fill=ROUTE_FILL, width=5, joint="curve")
+
+    rendered: list[tuple[str, int, int, int]] = []
+    for task_number, (row, annotation_points) in enumerate(pixel_rows, 1):
+        is_route = len(annotation_points) > 1
+        for waypoint_number, (x, y) in enumerate(annotation_points, 1):
+            rendered.append((row["task_id"], waypoint_number, x, y))
+            radius = MARKER_RADIUS
+            draw.ellipse(
+                (x - radius - 3, y - radius - 3, x + radius + 3, y + radius + 3),
+                fill=ROUTE_OUTLINE,
+            )
+            draw.ellipse(
+                (x - radius, y - radius, x + radius, y + radius),
+                fill=ROUTE_FILL if is_route else MARKER_FILL,
+                outline=(255, 255, 255),
+                width=3,
+            )
+            draw.text(
+                (x, y),
+                str(waypoint_number if is_route else task_number),
+                anchor="mm",
+                font=marker_font,
+                fill=ROUTE_OUTLINE if is_route else (255, 255, 255),
+                stroke_width=1,
+                stroke_fill=(255, 255, 255) if is_route else ROUTE_OUTLINE,
+            )
+
+    for task_number, (_, annotation_points) in enumerate(pixel_rows, 1):
+        if len(annotation_points) < 2:
+            continue
+        label = f"R{task_number}"
+        first_x, first_y = annotation_points[0]
+        text_box = draw.textbbox((0, 0), label, font=marker_font, stroke_width=1)
+        label_width = text_box[2] - text_box[0]
+        label_height = text_box[3] - text_box[1]
+        half_width = label_width / 2
+        half_height = label_height / 2
+        label_x = min(
+            max(half_width + 5, first_x + MARKER_RADIUS + 8 + half_width),
+            width - half_width - 5,
         )
-        draw.ellipse(
-            (x - radius, y - radius, x + radius, y + radius),
-            fill=MARKER_FILL,
+        label_y = min(
+            max(half_height + 5, first_y - MARKER_RADIUS - 8 - half_height),
+            height - half_height - 5,
+        )
+        draw.rounded_rectangle(
+            (
+                label_x - half_width - 4,
+                label_y - half_height - 3,
+                label_x + half_width + 4,
+                label_y + half_height + 3,
+            ),
+            radius=4,
+            fill=ROUTE_OUTLINE,
             outline=(255, 255, 255),
-            width=3,
+            width=2,
         )
         draw.text(
-            (x, y),
-            str(number),
+            (label_x, label_y),
+            label,
             anchor="mm",
             font=marker_font,
             fill=(255, 255, 255),
             stroke_width=1,
-            stroke_fill=(23, 28, 33),
+            stroke_fill=ROUTE_OUTLINE,
         )
-    return points
+    return rendered
 
 
 def main() -> None:
@@ -174,15 +259,15 @@ def main() -> None:
     legend_font = ImageFont.load_default(size=14)
     marker_font = ImageFont.load_default(size=18)
     draw_legend(image, rows, legend_font)
-    points = draw_markers(image, rows, marker_font)
+    points = draw_annotations(image, rows, marker_font)
 
     output.parent.mkdir(parents=True, exist_ok=True)
     image.save(output, format="PNG", optimize=False, compress_level=9)
 
     print(f"Fetched and rendered {len(rows)} annotation(s) to {output}")
     print(f"Source map: {width}x{height}, SHA-256 {source_hash}")
-    for task_id, x, y in points:
-        print(f"{task_id}: ({x}, {y})")
+    for task_id, waypoint_number, x, y in points:
+        print(f"{task_id} waypoint {waypoint_number}: ({x}, {y})")
 
 
 if __name__ == "__main__":

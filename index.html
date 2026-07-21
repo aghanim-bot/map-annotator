@@ -5,15 +5,16 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="description" content="Place prompt-driven annotations on an overhead game map.">
     <title>Map Annotator</title>
-    <link rel="stylesheet" href="./style.css?v=20260721-1">
-    <script src="./app.js?v=20260721-1" defer></script>
+    <link rel="stylesheet" href="./style.css">
+    <script src="./annotation-model.js" defer></script>
+    <script src="./app.js" defer></script>
   </head>
   <body>
     <main class="app-shell">
       <header class="page-header">
         <p class="eyebrow">Prompt-driven positioning</p>
         <h1>Map Annotator</h1>
-        <p class="intro">Choose a scenario, then click the requested location on the map.</p>
+        <p class="intro">Choose a scenario, then add the requested annotation to the map.</p>
       </header>
 
       <section class="selector-panel" aria-label="Annotation set">
@@ -32,7 +33,7 @@
       </section>
 
       <section class="task-panel" aria-labelledby="task-prompt">
-        <p id="progress" class="progress">Point 1 of 1</p>
+        <p id="progress" class="progress">Prompt 1 of 1</p>
         <h2 id="task-prompt">Loading prompt…</h2>
         <a
           id="task-source"
@@ -51,8 +52,24 @@
           aria-disabled="true"
         >
           <img id="map-image" alt="" draggable="false">
+          <svg
+            id="route-overlay"
+            class="route-overlay"
+            viewBox="0 0 100 100"
+            preserveAspectRatio="none"
+            aria-hidden="true"
+            hidden
+          >
+            <polyline id="route-line" class="route-line" points=""></polyline>
+          </svg>
+          <div id="route-markers" class="route-markers" aria-hidden="true" hidden></div>
           <span id="marker" class="marker" aria-hidden="true" hidden></span>
         </div>
+      </div>
+
+      <div id="route-actions" class="route-actions" hidden>
+        <button id="undo-route-button" type="button">Undo last</button>
+        <button id="save-route-button" class="primary-button" type="button">Save route</button>
       </div>
 
       <nav class="task-navigation" aria-label="Prompt navigation">
@@ -61,7 +78,7 @@
       </nav>
 
       <div class="status-row">
-        <p id="status" class="status" role="status" aria-live="polite">Loading saved points…</p>
+        <p id="status" class="status" role="status" aria-live="polite">Loading saved annotations…</p>
       </div>
 
       <noscript>This app requires JavaScript to load and save map annotations.</noscript>

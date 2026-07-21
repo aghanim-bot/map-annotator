@@ -144,6 +144,47 @@ select {
   -webkit-user-drag: none;
 }
 
+.route-overlay,
+.route-markers {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+
+.route-overlay { z-index: 1; }
+
+.route-line {
+  fill: none;
+  stroke: #ffd24a;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-width: 4;
+  vector-effect: non-scaling-stroke;
+  paint-order: stroke;
+  filter: drop-shadow(0 0 2px #17212b);
+}
+
+.route-markers { z-index: 2; }
+
+.route-marker {
+  position: absolute;
+  display: grid;
+  width: clamp(1.2rem, 3vw, 1.8rem);
+  aspect-ratio: 1;
+  place-items: center;
+  border: 2px solid #fff;
+  border-radius: 50%;
+  color: #17212b;
+  background: #ffd24a;
+  box-shadow: 0 0 0 2px rgb(23 33 43 / 80%);
+  font-size: clamp(0.68rem, 1.6vw, 0.9rem);
+  font-weight: 800;
+  line-height: 1;
+  transform: translate(-50%, -50%);
+}
+
 .marker {
   position: absolute;
   width: clamp(0.9rem, 2.2vw, 1.35rem);
@@ -154,8 +195,10 @@ select {
   box-shadow: 0 0 0 2px #52050cbf;
   pointer-events: none;
   transform: translate(-50%, -50%);
+  z-index: 3;
 }
 
+.route-actions,
 .task-navigation,
 .status-row {
   display: flex;
@@ -163,6 +206,13 @@ select {
   justify-content: space-between;
   gap: 0.75rem;
 }
+
+.route-actions {
+  justify-content: flex-end;
+  margin-top: 0.75rem;
+}
+
+.route-actions[hidden] { display: none; }
 
 .task-navigation { margin-top: 1rem; }
 
@@ -182,6 +232,14 @@ select:disabled {
   cursor: not-allowed;
   opacity: 0.55;
 }
+
+.primary-button {
+  border-color: #0f4c6a;
+  color: #fff;
+  background: #0f4c6a;
+}
+
+.primary-button:hover:not(:disabled) { background: #0a3448; }
 
 .status-row {
   justify-content: flex-start;

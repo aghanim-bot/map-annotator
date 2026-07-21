@@ -1,0 +1,16 @@
+[
+  {
+    "task_id": "a-single-point",
+    "points": [
+      { "x": 0.1, "y": 0.2 }
+    ]
+  },
+  {
+    "task_id": "b-right-route",
+    "points": [
+      { "x": 0.2, "y": 0.3 },
+      { "x": 0.5, "y": 0.6 },
+      { "x": 0.8, "y": 0.7 }
+    ]
+  }
+]

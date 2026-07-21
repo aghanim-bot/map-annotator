@@ -1,5 +1,17 @@
 'use strict';
 
+const {
+  appendWaypoint,
+  buildAnnotationPayload,
+  hasMinimumPoints,
+  parseAnnotationRows,
+  seedRouteDrafts,
+  setRouteOverlayHidden,
+  svgPolylinePoints,
+  taskMetadata,
+  undoLastWaypoint
+} = window.AnnotationModel;
+
 const API =
   'https://anycors.sirstoke.me/' +
   'https://postgrest.sirstoke.me/map_annotations';
@@ -40,6 +52,12 @@ const annotationSets = [
         youtubeSourceAt('2:13:54', 8034)
       ],
       [
+        'a-right-rotation-route',
+        'Trace the right-side rotation from the Point A choke toward the right-side high ground.',
+        youtubeSourceAt('2:13:54', 8034),
+        { kind: 'route', minPoints: 2 }
+      ],
+      [
         'a-right-high-ground',
         'Click the right-side high ground above the Point A choke.',
         youtubeSourceAt('2:14:00', 8040)
@@ -73,6 +91,12 @@ const ui = {
   stage: document.querySelector('#map-stage'),
   image: document.querySelector('#map-image'),
   marker: document.querySelector('#marker'),
+  routeOverlay: document.querySelector('#route-overlay'),
+  routeLine: document.querySelector('#route-line'),
+  routeMarkers: document.querySelector('#route-markers'),
+  routeActions: document.querySelector('#route-actions'),
+  undoRoute: document.querySelector('#undo-route-button'),
+  saveRoute: document.querySelector('#save-route-button'),
   previous: document.querySelector('#previous-button'),
   next: document.querySelector('#next-button'),
   status: document.querySelector('#status')
@@ -80,7 +104,8 @@ const ui = {
 
 let activeSet;
 let taskIndex = 0;
-let savedPoints = new Map();
+let savedAnnotations = new Map();
+let routeDrafts = new Map();
 let ready = false;
 let busy = false;
 
@@ -139,11 +164,47 @@ function showMarker(point) {
   }
 }
 
+function currentTask() {
+  return activeSet.tasks[taskIndex];
+}
+
+function ensureRouteDraft(taskId) {
+  if (!routeDrafts.has(taskId)) {
+    const saved = savedAnnotations.get(taskId) || [];
+    routeDrafts.set(
+      taskId,
+      saved.map((point) => ({ ...point }))
+    );
+  }
+  return routeDrafts.get(taskId);
+}
+
+function showRoute(points) {
+  setRouteOverlayHidden(ui.routeOverlay, points.length === 0);
+  ui.routeLine.setAttribute('points', svgPolylinePoints(points));
+  ui.routeMarkers.hidden = points.length === 0;
+  ui.routeMarkers.replaceChildren(
+    ...points.map((point, index) => {
+      const marker = document.createElement('span');
+      marker.className = 'route-marker';
+      marker.style.left = `${point.x * 100}%`;
+      marker.style.top = `${point.y * 100}%`;
+      marker.textContent = String(index + 1);
+      return marker;
+    })
+  );
+}
+
 function updateControls() {
   const disabled = !ready || busy;
+  const task = currentTask();
+  const metadata = taskMetadata(task);
+  const routePoints = metadata.kind === 'route' ? ensureRouteDraft(task[0]) : [];
   ui.stage.setAttribute('aria-disabled', disabled);
   ui.previous.disabled = disabled || taskIndex === 0;
   ui.next.disabled = disabled || taskIndex === activeSet.tasks.length - 1;
+  ui.undoRoute.disabled = disabled || routePoints.length === 0;
+  ui.saveRoute.disabled = disabled || !hasMinimumPoints(routePoints, metadata.minPoints);
   ui.map.disabled = busy;
   ui.hero.disabled = busy;
   ui.mode.disabled = busy;
@@ -166,11 +227,21 @@ function renderSource(source) {
 }
 
 function renderTask() {
-  const [taskId, prompt, source] = activeSet.tasks[taskIndex];
-  ui.progress.textContent = `Point ${taskIndex + 1} of ${activeSet.tasks.length}`;
+  const task = currentTask();
+  const [taskId, prompt, source] = task;
+  const metadata = taskMetadata(task);
+  ui.progress.textContent = `Prompt ${taskIndex + 1} of ${activeSet.tasks.length}`;
   ui.prompt.textContent = prompt;
   renderSource(source);
-  showMarker(savedPoints.get(taskId));
+  ui.routeActions.hidden = metadata.kind !== 'route';
+  if (metadata.kind === 'route') {
+    showMarker(null);
+    showRoute(ensureRouteDraft(taskId));
+  } else {
+    const points = savedAnnotations.get(taskId) || [];
+    showMarker(points[0]);
+    showRoute([]);
+  }
   updateControls();
 }
 
@@ -180,7 +251,7 @@ function rowsUrl() {
   url.searchParams.set('map_version', `eq.${activeSet.mapVersion}`);
   url.searchParams.set('hero_id', `eq.${activeSet.heroId}`);
   url.searchParams.set('mode_id', `eq.${activeSet.modeId}`);
-  url.searchParams.set('select', 'task_id,x,y');
+  url.searchParams.set('select', 'task_id,points');
   return url;
 }
 
@@ -199,11 +270,12 @@ function loadImage() {
 async function loadSelection() {
   activeSet = selectedSet();
   taskIndex = 0;
-  savedPoints = new Map();
+  savedAnnotations = new Map();
+  routeDrafts = new Map();
   ready = false;
   busy = true;
   renderTask();
-  setStatus('Loading saved points…');
+  setStatus('Loading saved annotations…');
 
   try {
     const rowsRequest = fetch(rowsUrl(), { headers: { Accept: 'application/json' } }).then(
@@ -213,30 +285,31 @@ async function loadSelection() {
       }
     );
     const [rows] = await Promise.all([rowsRequest, loadImage()]);
-    savedPoints = new Map(
-      rows.map((row) => [row.task_id, { x: Number(row.x), y: Number(row.y) }])
-    );
-    const firstUnsaved = activeSet.tasks.findIndex(([taskId]) => !savedPoints.has(taskId));
-    const savedCount = activeSet.tasks.filter(([taskId]) => savedPoints.has(taskId)).length;
+    savedAnnotations = parseAnnotationRows(rows);
+    routeDrafts = seedRouteDrafts(savedAnnotations);
+    const firstUnsaved = activeSet.tasks.findIndex(([taskId]) => !savedAnnotations.has(taskId));
+    const savedCount = activeSet.tasks.filter(([taskId]) => savedAnnotations.has(taskId)).length;
     taskIndex = firstUnsaved < 0 ? 0 : firstUnsaved;
     ready = true;
     busy = false;
     renderTask();
-    setStatus(`${savedCount} of ${activeSet.tasks.length} points saved.`);
+    setStatus(`${savedCount} of ${activeSet.tasks.length} annotations saved.`);
   } catch (error) {
     console.error(error);
     busy = false;
     renderTask();
-    setStatus('Could not load saved points. Reload the page to try again.', 'error');
+    setStatus('Could not load saved annotations. Reload the page to try again.', 'error');
   }
 }
 
-async function savePoint(point) {
-  const taskId = activeSet.tasks[taskIndex][0];
+async function saveAnnotation(points, advance) {
+  const task = currentTask();
+  const taskId = task[0];
+  const metadata = taskMetadata(task);
   const url = new URL(API);
   url.searchParams.set('on_conflict', 'map_id,map_version,hero_id,mode_id,task_id');
   busy = true;
-  showMarker(point);
+  if (metadata.kind === 'point') showMarker(points[0]);
   updateControls();
   setStatus('Saving…');
 
@@ -247,29 +320,36 @@ async function savePoint(point) {
         'Content-Type': 'application/json',
         Prefer: 'resolution=merge-duplicates,return=minimal'
       },
-      body: JSON.stringify({
-        map_id: activeSet.mapId,
-        map_version: activeSet.mapVersion,
-        hero_id: activeSet.heroId,
-        mode_id: activeSet.modeId,
-        task_id: taskId,
-        x: point.x,
-        y: point.y,
-        updated_at: new Date().toISOString()
-      })
+      body: JSON.stringify(
+        buildAnnotationPayload(activeSet, taskId, points, new Date().toISOString())
+      )
     });
     if (!response.ok) throw new Error(`Save failed (${response.status}).`);
 
-    savedPoints.set(taskId, point);
-    if (taskIndex < activeSet.tasks.length - 1) taskIndex += 1;
+    savedAnnotations.set(
+      taskId,
+      points.map((point) => ({ ...point }))
+    );
+    if (metadata.kind === 'route') {
+      routeDrafts.set(
+        taskId,
+        points.map((point) => ({ ...point }))
+      );
+    }
+    if (advance && taskIndex < activeSet.tasks.length - 1) taskIndex += 1;
     busy = false;
     renderTask();
-    setStatus('Saved', 'success');
+    setStatus('Annotation saved', 'success');
   } catch (error) {
     console.error(error);
     busy = false;
     renderTask();
-    setStatus('Save failed — click the map to try again.', 'error');
+    setStatus(
+      metadata.kind === 'route'
+        ? 'Save failed — press Save route to try again.'
+        : 'Save failed — click the map to try again.',
+      'error'
+    );
   }
 }
 
@@ -277,22 +357,69 @@ ui.stage.addEventListener('click', (event) => {
   if (!ready || busy) return;
   const rect = ui.stage.getBoundingClientRect();
   const clamp = (number) => Math.max(0, Math.min(1, number));
-  void savePoint({
+  const point = {
     x: clamp((event.clientX - rect.left) / rect.width),
     y: clamp((event.clientY - rect.top) / rect.height)
-  });
+  };
+  const task = currentTask();
+  const metadata = taskMetadata(task);
+  if (metadata.kind === 'route') {
+    const draft = appendWaypoint(ensureRouteDraft(task[0]), point);
+    routeDrafts.set(task[0], draft);
+    renderTask();
+    setStatus(
+      `${draft.length} waypoint${draft.length === 1 ? '' : 's'} added. Press Save route when complete.`
+    );
+  } else {
+    void saveAnnotation([point], true);
+  }
 });
+
+ui.undoRoute.addEventListener('click', () => {
+  const task = currentTask();
+  const draft = undoLastWaypoint(ensureRouteDraft(task[0]));
+  routeDrafts.set(task[0], draft);
+  renderTask();
+  setStatus(`${draft.length} waypoint${draft.length === 1 ? '' : 's'} in the route draft.`);
+});
+
+ui.saveRoute.addEventListener('click', () => {
+  const task = currentTask();
+  const metadata = taskMetadata(task);
+  const draft = ensureRouteDraft(task[0]);
+  if (!hasMinimumPoints(draft, metadata.minPoints)) {
+    setStatus(`Add at least ${metadata.minPoints} waypoints before saving.`, 'error');
+    return;
+  }
+  void saveAnnotation(draft, true);
+});
+
+function taskStatus() {
+  const task = currentTask();
+  const metadata = taskMetadata(task);
+  if (metadata.kind === 'point') {
+    return savedAnnotations.has(task[0]) ? 'Saved annotation' : 'Annotation not saved';
+  }
+
+  const draft = ensureRouteDraft(task[0]);
+  const saved = savedAnnotations.get(task[0]);
+  const count = `${draft.length} waypoint${draft.length === 1 ? '' : 's'}`;
+  if (!saved) return `${count} in an unsaved route.`;
+  return JSON.stringify(draft) === JSON.stringify(saved)
+    ? `Saved route loaded for editing · ${count}.`
+    : `Unsaved route edits · ${count}.`;
+}
 
 ui.previous.addEventListener('click', () => {
   taskIndex -= 1;
   renderTask();
-  setStatus(savedPoints.has(activeSet.tasks[taskIndex][0]) ? 'Saved point' : 'Not saved');
+  setStatus(taskStatus());
 });
 
 ui.next.addEventListener('click', () => {
   taskIndex += 1;
   renderTask();
-  setStatus(savedPoints.has(activeSet.tasks[taskIndex][0]) ? 'Saved point' : 'Not saved');
+  setStatus(taskStatus());
 });
 
 ui.map.addEventListener('change', () => {

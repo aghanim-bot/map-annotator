@@ -53,6 +53,9 @@ else
 fi
 
 commit=$("$git_cmd" -C "$checkout" rev-parse --verify "refs/remotes/origin/$BRANCH^{commit}")
+case $commit in
+    ''|*[!0-9a-f]*) fail "resolved commit is not a lowercase hexadecimal object ID: $commit" ;;
+esac
 "$git_cmd" -C "$checkout" reset --hard "$commit"
 "$git_cmd" -C "$checkout" clean -ffdx
 
@@ -68,9 +71,17 @@ validate_tree() {
 
 validate_file "$checkout/index.html"
 validate_file "$checkout/style.css"
+validate_file "$checkout/annotation-model.js"
 validate_file "$checkout/app.js"
 validate_tree "$checkout/maps"
 [ -n "$(find "$checkout/maps" -type f -print -quit)" ] || fail "maps directory contains no files"
+
+grep -F 'href="./style.css"' "$checkout/index.html" >/dev/null || \
+    fail "index.html must reference ./style.css"
+grep -F 'src="./annotation-model.js"' "$checkout/index.html" >/dev/null || \
+    fail "index.html must reference ./annotation-model.js"
+grep -F 'src="./app.js"' "$checkout/index.html" >/dev/null || \
+    fail "index.html must reference ./app.js"
 
 if [ -e "$checkout/renders" ] || [ -L "$checkout/renders" ]; then
     validate_tree "$checkout/renders"
@@ -91,12 +102,43 @@ install_tree() {
 }
 
 install -d -m 0755 "$public_dir"
+
+style_asset=style.$commit.css
+model_asset=annotation-model.$commit.js
+app_asset=app.$commit.js
+
+install -m 0644 "$checkout/style.css" "$public_dir/$style_asset"
+install -m 0644 "$checkout/annotation-model.js" "$public_dir/$model_asset"
+install -m 0644 "$checkout/app.js" "$public_dir/$app_asset"
+
 install_tree "$checkout/maps" "$public_dir/maps"
 if [ "$include_renders" -eq 1 ]; then
     install_tree "$checkout/renders" "$public_dir/renders"
 fi
-install -m 0644 "$checkout/style.css" "$public_dir/style.css"
-install -m 0644 "$checkout/app.js" "$public_dir/app.js"
-install -m 0644 "$checkout/index.html" "$public_dir/index.html"
+
+index_temp=$(mktemp "$public_dir/.index.$commit.XXXXXX")
+cleanup() {
+    if [ -n "${index_temp:-}" ] && [ -e "$index_temp" ]; then
+        rm -f -- "$index_temp"
+    fi
+}
+trap cleanup 0
+
+sed \
+    -e "s|href=\"./style.css\"|href=\"./$style_asset\"|" \
+    -e "s|src=\"./annotation-model.js\"|src=\"./$model_asset\"|" \
+    -e "s|src=\"./app.js\"|src=\"./$app_asset\"|" \
+    "$checkout/index.html" > "$index_temp"
+chmod 0644 "$index_temp"
+
+grep -F "href=\"./$style_asset\"" "$index_temp" >/dev/null || \
+    fail "generated index does not reference $style_asset"
+grep -F "src=\"./$model_asset\"" "$index_temp" >/dev/null || \
+    fail "generated index does not reference $model_asset"
+grep -F "src=\"./$app_asset\"" "$index_temp" >/dev/null || \
+    fail "generated index does not reference $app_asset"
+
+mv -f -- "$index_temp" "$public_dir/index.html"
+index_temp=
 
 printf 'Deployed map-annotator commit %s\n' "$commit"
