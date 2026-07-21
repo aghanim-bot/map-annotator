@@ -86,23 +86,40 @@ select {
 }
 
 .task-panel h2 {
-  margin-bottom: 0.45rem;
+  margin-bottom: 0.75rem;
   font-size: clamp(1.1rem, 3vw, 1.45rem);
   line-height: 1.4;
 }
 
 .task-source {
-  color: #446173;
-  font-size: 0.82rem;
+  display: inline-flex;
+  align-items: center;
+  min-height: 2.75rem;
+  padding: 0.6rem 0.85rem;
+  border: 2px solid #0a3448;
+  border-radius: 0.5rem;
+  color: #fff;
+  background: #0f4c6a;
+  font-size: 0.95rem;
+  font-weight: 750;
+  line-height: 1.25;
+  text-decoration-thickness: 0.1em;
   text-underline-offset: 0.18em;
 }
 
-.task-source:hover { color: #173f57; }
+.task-source:hover {
+  color: #fff;
+  background: #0a3448;
+}
+
+.task-source:visited { color: #fff; }
 
 .task-source:focus-visible {
-  outline: 3px solid rgb(19 96 143 / 35%);
-  outline-offset: 2px;
+  outline: 3px solid #d78a00;
+  outline-offset: 3px;
 }
+
+.task-source[hidden] { display: none; }
 
 .map-frame {
   padding: clamp(0.3rem, 1vw, 0.6rem);
