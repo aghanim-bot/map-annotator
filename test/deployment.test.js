@@ -39,12 +39,14 @@ function createDeploymentFixture(t) {
       '<!doctype html>',
       '<link rel="stylesheet" href="./style.css">',
       '<script src="./annotation-model.js" defer></script>',
+      '<script src="./data/audited-tasks.js" defer></script>',
       '<script src="./data/annotation-sets.js" defer></script>',
       '<script src="./app.js" defer></script>'
     ].join('\n')
   );
   writeFileSync(join(sourceRepository, 'style.css'), 'new-style\n');
   writeFileSync(join(sourceRepository, 'annotation-model.js'), 'new-model\n');
+  writeFileSync(join(sourceRepository, 'data', 'audited-tasks.js'), 'new-tasks\n');
   writeFileSync(join(sourceRepository, 'data', 'annotation-sets.js'), 'new-sets\n');
   writeFileSync(join(sourceRepository, 'app.js'), 'new-app\n');
   for (const slug of mapSlugs) {
@@ -96,11 +98,12 @@ test('repository index uses unversioned source assets for local serving', () => 
 
   assert.match(index, /href="\.\/style\.css"/);
   assert.match(index, /src="\.\/annotation-model\.js"/);
+  assert.match(index, /src="\.\/data\/audited-tasks\.js"/);
   assert.match(index, /src="\.\/data\/annotation-sets\.js"/);
   assert.match(index, /src="\.\/app\.js"/);
   assert.doesNotMatch(
     index,
-    /(?:style\.css|annotation-model\.js|annotation-sets\.js|app\.js)\?/
+    /(?:style\.css|annotation-model\.js|audited-tasks\.js|annotation-sets\.js|app\.js)\?/
   );
 });
 
@@ -153,6 +156,7 @@ exec /usr/bin/mv "$@"
   const expectedAssets = [
     `style.${fixture.commit}.css`,
     `annotation-model.${fixture.commit}.js`,
+    `audited-tasks.${fixture.commit}.js`,
     `annotation-sets.${fixture.commit}.js`,
     `app.${fixture.commit}.js`
   ];

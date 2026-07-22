@@ -72,6 +72,7 @@ validate_tree() {
 validate_file "$checkout/index.html"
 validate_file "$checkout/style.css"
 validate_file "$checkout/annotation-model.js"
+validate_file "$checkout/data/audited-tasks.js"
 validate_file "$checkout/data/annotation-sets.js"
 validate_file "$checkout/app.js"
 validate_tree "$checkout/maps"
@@ -86,6 +87,8 @@ grep -F 'href="./style.css"' "$checkout/index.html" >/dev/null || \
     fail "index.html must reference ./style.css"
 grep -F 'src="./annotation-model.js"' "$checkout/index.html" >/dev/null || \
     fail "index.html must reference ./annotation-model.js"
+grep -F 'src="./data/audited-tasks.js"' "$checkout/index.html" >/dev/null || \
+    fail "index.html must reference ./data/audited-tasks.js"
 grep -F 'src="./data/annotation-sets.js"' "$checkout/index.html" >/dev/null || \
     fail "index.html must reference ./data/annotation-sets.js"
 grep -F 'src="./app.js"' "$checkout/index.html" >/dev/null || \
@@ -113,11 +116,13 @@ install -d -m 0755 "$public_dir"
 
 style_asset=style.$commit.css
 model_asset=annotation-model.$commit.js
+tasks_asset=audited-tasks.$commit.js
 sets_asset=annotation-sets.$commit.js
 app_asset=app.$commit.js
 
 install -m 0644 "$checkout/style.css" "$public_dir/$style_asset"
 install -m 0644 "$checkout/annotation-model.js" "$public_dir/$model_asset"
+install -m 0644 "$checkout/data/audited-tasks.js" "$public_dir/$tasks_asset"
 install -m 0644 "$checkout/data/annotation-sets.js" "$public_dir/$sets_asset"
 install -m 0644 "$checkout/app.js" "$public_dir/$app_asset"
 
@@ -140,6 +145,7 @@ trap cleanup 0
 sed \
     -e "s|href=\"./style.css\"|href=\"./$style_asset\"|" \
     -e "s|src=\"./annotation-model.js\"|src=\"./$model_asset\"|" \
+    -e "s|src=\"./data/audited-tasks.js\"|src=\"./$tasks_asset\"|" \
     -e "s|src=\"./data/annotation-sets.js\"|src=\"./$sets_asset\"|" \
     -e "s|src=\"./app.js\"|src=\"./$app_asset\"|" \
     "$checkout/index.html" > "$index_temp"
@@ -149,6 +155,8 @@ grep -F "href=\"./$style_asset\"" "$index_temp" >/dev/null || \
     fail "generated index does not reference $style_asset"
 grep -F "src=\"./$model_asset\"" "$index_temp" >/dev/null || \
     fail "generated index does not reference $model_asset"
+grep -F "src=\"./$tasks_asset\"" "$index_temp" >/dev/null || \
+    fail "generated index does not reference $tasks_asset"
 grep -F "src=\"./$sets_asset\"" "$index_temp" >/dev/null || \
     fail "generated index does not reference $sets_asset"
 grep -F "src=\"./$app_asset\"" "$index_temp" >/dev/null || \
