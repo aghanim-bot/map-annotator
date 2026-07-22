@@ -36,7 +36,7 @@ test('exports the same annotation sets to CommonJS and browsers', () => {
   assert.equal(context.AnnotationSets.pendingMaps.length, pendingMaps.length);
 });
 
-test('stages exactly three audited prompts per canonical map and hero while gating live sets to ready imagery', () => {
+test('exports every audited prompt while marking imagery readiness on each selectable set', () => {
   assert.equal(mapPool.length, 30);
   assert.equal(new Set(mapPool.map(({ mapId }) => mapId)).size, 30);
   assert.equal(readyMaps.length, 17);
@@ -59,22 +59,23 @@ test('stages exactly three audited prompts per canonical map and hero while gati
 
   assert.deepEqual(
     [...new Set(annotationSets.map(({ mapId }) => mapId))].sort(),
-    readyMaps.map(({ mapId }) => mapId).sort()
+    mapPool.map(({ mapId }) => mapId).sort()
   );
   assert.deepEqual(
     [...new Set(annotationSets.map(({ heroId }) => heroId))].sort(),
     Object.keys(canonicalHeroes).sort()
   );
-  assert.equal(annotationSets.length, 17 * 3);
-  assert.equal(annotationSets.flatMap(({ tasks }) => tasks).length, 17 * 3 * 3);
-  assert.ok(annotationSets.every(({ mapId }) => readyMaps.some((map) => map.mapId === mapId)));
-  assert.ok(pendingMaps.every(({ mapId }) => !annotationSets.some((set) => set.mapId === mapId)));
+  assert.equal(annotationSets.length, 30 * 3);
+  assert.equal(annotationSets.flatMap(({ tasks }) => tasks).length, 30 * 3 * 3);
+  assert.equal(annotationSets.filter(({ imageryStatus }) => imageryStatus === 'ready').length, 51);
+  assert.equal(annotationSets.filter(({ imageryStatus }) => imageryStatus === 'pending').length, 39);
 
   for (const { mapId, mapName } of mapPool) {
     for (const [heroId, heroName] of Object.entries(canonicalHeroes)) {
       assert.equal(auditedTasks[`${mapId}:${heroId}`].length, 3, `${mapName} ${heroName} audit count`);
       const sets = annotationSets.filter((set) => set.mapId === mapId && set.heroId === heroId);
-      assert.equal(sets.length, readyMaps.some((map) => map.mapId === mapId) ? 1 : 0);
+      assert.equal(sets.length, 1);
+      assert.equal(sets[0].imageryStatus, mapPool.find((map) => map.mapId === mapId).imageryStatus);
     }
   }
 });
@@ -92,12 +93,16 @@ test('uses only timestamped evidence sources, new semantics, and valid task meta
   const blindGenericWording = /(?:select (?:a|the) place|good angle|wide angle|generic cover|good flank|generic flank|generic side[ -]lane|(?:select|choose|mark|click|find) (?:a |an |the )?(?:cover|flank|side[ -]lane)\b|select as cover|visible side lane|visibly open sightline)/i;
   const canonicalEvidenceUrl = /^(?:https:\/\/www\.youtube\.com\/watch\?v=[A-Za-z0-9_-]+&t=\d+(?:\.\d+)?s|https:\/\/www\.reddit\.com\/r\/[A-Za-z0-9_]+\/comments\/[A-Za-z0-9]+\/[A-Za-z0-9_-]+\/[A-Za-z0-9]+\/?)$/;
   for (const set of annotationSets) {
-    assert.equal(set.mapVersion, '2026-07-22-r2');
-    assert.equal(set.mapImage, `./maps/${set.mapId}-2026-07-22-r2.webp`);
-    const imagePath = join(repositoryRoot, set.mapImage);
-    assert.equal(existsSync(imagePath), true, imagePath);
-    assert.ok(statSync(imagePath).size > 0, imagePath);
-
+    if (set.imageryStatus === 'ready') {
+      assert.equal(set.mapVersion, '2026-07-22-r2');
+      assert.equal(set.mapImage, `./maps/${set.mapId}-2026-07-22-r2.webp`);
+      const imagePath = join(repositoryRoot, set.mapImage);
+      assert.equal(existsSync(imagePath), true, imagePath);
+      assert.ok(statSync(imagePath).size > 0, imagePath);
+    } else {
+      assert.equal(set.mapVersion, 'pending-overhead-capture');
+      assert.equal(set.mapImage, null);
+    }
   }
 
   for (const [key, tasks] of Object.entries(auditedTasks)) {
@@ -152,6 +157,7 @@ test('removes catalog files, scripts, and UI while retaining annotator controls'
   assert.match(index, /do not imply unsupported recommendations/i);
   assert.match(index, /imagery-availability/);
   const app = readFileSync(join(repositoryRoot, 'app.js'), 'utf8');
-  assert.match(app, /maps ready/);
-  assert.match(app, /awaiting current overhead captures/);
+  assert.match(app, /prompt-ready maps/);
+  assert.match(app, /annotation-ready/);
+  assert.match(index, /Overhead map capture pending/);
 });

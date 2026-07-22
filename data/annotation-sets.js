@@ -53,12 +53,13 @@
   const titleCase = (value) => value.replace(/(^|-)([a-z])/g, (_, prefix, letter) =>
     `${prefix ? ' ' : ''}${letter.toUpperCase()}`);
 
-  const annotationSets = readyMaps.flatMap(({ mapId, mapName, modeId }) =>
+  const annotationSets = mapPool.flatMap(({ mapId, mapName, modeId, imageryStatus }) =>
     Object.entries(heroNames).map(([heroId, heroName]) => ({
       mapId,
-      mapVersion: '2026-07-22-r2',
+      mapVersion: imageryStatus === 'ready' ? '2026-07-22-r2' : 'pending-overhead-capture',
       mapName,
-      mapImage: `./maps/${mapId}-2026-07-22-r2.webp`,
+      mapImage: imageryStatus === 'ready' ? `./maps/${mapId}-2026-07-22-r2.webp` : null,
+      imageryStatus,
       heroId,
       heroName,
       modeId,

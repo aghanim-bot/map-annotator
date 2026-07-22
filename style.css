@@ -137,12 +137,30 @@ select {
 
 .map-stage[aria-disabled="true"] { cursor: wait; }
 
+.map-stage[data-imagery-status="pending"] { cursor: not-allowed; }
+
 .map-stage img {
   display: block;
   width: 100%;
   height: auto;
   -webkit-user-drag: none;
 }
+
+.map-placeholder {
+  display: grid;
+  min-height: clamp(18rem, 52vw, 38rem);
+  margin: 0;
+  padding: 2rem;
+  place-items: center;
+  color: #fff;
+  background: #263946;
+  font-size: clamp(1rem, 2.5vw, 1.3rem);
+  font-weight: 700;
+  line-height: 1.5;
+  text-align: center;
+}
+
+.map-placeholder[hidden] { display: none; }
 
 .route-overlay,
 .route-markers {

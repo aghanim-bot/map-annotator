@@ -180,3 +180,23 @@ test('clamps an explicit route minimum to at least two waypoints', () => {
     { kind: 'route', minPoints: 2 }
   );
 });
+
+test('separates prompt navigation from annotation capabilities when imagery is pending', () => {
+  assert.deepEqual(model.selectionCapabilities({ imageryStatus: 'pending', mapImage: null }), {
+    canAnnotate: false,
+    canLoadImage: false,
+    canFetchRows: false,
+    canSave: false,
+    canClickMap: false
+  });
+  assert.deepEqual(
+    model.selectionCapabilities({ imageryStatus: 'ready', mapImage: './maps/busan.webp' }),
+    {
+      canAnnotate: true,
+      canLoadImage: true,
+      canFetchRows: true,
+      canSave: true,
+      canClickMap: true
+    }
+  );
+});

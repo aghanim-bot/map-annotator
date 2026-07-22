@@ -17,8 +17,16 @@ const { join } = require('node:path');
 const repositoryRoot = join(__dirname, '..');
 const deployScriptPath = join(repositoryRoot, 'deploy', 'update-static.sh');
 const indexPath = join(repositoryRoot, 'index.html');
-const { annotationSets } = require('../data/annotation-sets.js');
-const mapSlugs = [...new Set(annotationSets.map(({ mapId }) => mapId))];
+const { readyMaps } = require('../data/annotation-sets.js');
+const mapSlugs = readyMaps.map(({ mapId }) => mapId);
+
+test('deployment copies exactly the 17 real overhead images', () => {
+  assert.equal(mapSlugs.length, 17);
+  const script = readFileSync(deployScriptPath, 'utf8');
+  const declaration = script.match(/map_slugs='([^']+)'/);
+  assert.ok(declaration);
+  assert.deepEqual(declaration[1].split(' ').sort(), [...mapSlugs].sort());
+});
 
 function run(command, args, options = {}) {
   const result = spawnSync(command, args, { encoding: 'utf8', ...options });

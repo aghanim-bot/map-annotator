@@ -6,6 +6,7 @@ const {
   hasMinimumPoints,
   parseAnnotationRows,
   seedRouteDrafts,
+  selectionCapabilities,
   setRouteOverlayHidden,
   svgPolylinePoints,
   taskMetadata,
@@ -26,6 +27,7 @@ const ui = {
   source: document.querySelector('#task-source'),
   stage: document.querySelector('#map-stage'),
   image: document.querySelector('#map-image'),
+  placeholder: document.querySelector('#map-placeholder'),
   marker: document.querySelector('#marker'),
   routeOverlay: document.querySelector('#route-overlay'),
   routeLine: document.querySelector('#route-line'),
@@ -39,7 +41,7 @@ const ui = {
 };
 
 document.querySelector('#imagery-availability').textContent =
-  `${mapPool.length - pendingMaps.length} of ${mapPool.length} maps ready · ` +
+  `${mapPool.length} prompt-ready maps · ${mapPool.length - pendingMaps.length} annotation-ready · ` +
   `${pendingMaps.length} awaiting current overhead captures`;
 
 let activeSet;
@@ -48,6 +50,7 @@ let savedAnnotations = new Map();
 let routeDrafts = new Map();
 let ready = false;
 let busy = false;
+let selectionGeneration = 0;
 
 const mapKey = (set) => `${set.mapId}:${set.mapVersion}`;
 
@@ -136,15 +139,16 @@ function showRoute(points) {
 }
 
 function updateControls() {
-  const disabled = !ready || busy;
+  const capabilities = selectionCapabilities(activeSet);
+  const annotationDisabled = !ready || busy || !capabilities.canAnnotate;
   const task = currentTask();
   const metadata = taskMetadata(task);
   const routePoints = metadata.kind === 'route' ? ensureRouteDraft(task[0]) : [];
-  ui.stage.setAttribute('aria-disabled', disabled);
-  ui.previous.disabled = disabled || taskIndex === 0;
-  ui.next.disabled = disabled || taskIndex === activeSet.tasks.length - 1;
-  ui.undoRoute.disabled = disabled || routePoints.length === 0;
-  ui.saveRoute.disabled = disabled || !hasMinimumPoints(routePoints, metadata.minPoints);
+  ui.stage.setAttribute('aria-disabled', annotationDisabled);
+  ui.previous.disabled = busy || taskIndex === 0;
+  ui.next.disabled = busy || taskIndex === activeSet.tasks.length - 1;
+  ui.undoRoute.disabled = annotationDisabled || routePoints.length === 0;
+  ui.saveRoute.disabled = annotationDisabled || !hasMinimumPoints(routePoints, metadata.minPoints);
   ui.map.disabled = busy;
   ui.hero.disabled = busy;
   ui.mode.disabled = busy;
@@ -173,7 +177,7 @@ function renderTask() {
   ui.progress.textContent = `Prompt ${taskIndex + 1} of ${activeSet.tasks.length}`;
   ui.prompt.textContent = prompt;
   renderSource(source);
-  ui.routeActions.hidden = metadata.kind !== 'route';
+  ui.routeActions.hidden = metadata.kind !== 'route' || !selectionCapabilities(activeSet).canAnnotate;
   if (metadata.kind === 'route') {
     showMarker(null);
     showRoute(ensureRouteDraft(taskId));
@@ -195,12 +199,12 @@ function rowsUrl() {
   return url;
 }
 
-function loadImage() {
-  ui.image.alt = `${activeSet.mapName} map image`;
+function loadImage(set) {
+  ui.image.alt = `${set.mapName} map image`;
   return new Promise((resolve, reject) => {
     ui.image.onload = resolve;
     ui.image.onerror = () => reject(new Error('Map image failed to load.'));
-    ui.image.src = activeSet.mapImage;
+    ui.image.src = set.mapImage;
     if (ui.image.complete) {
       ui.image.naturalWidth ? resolve() : reject(new Error('Map image failed to load.'));
     }
@@ -208,13 +212,30 @@ function loadImage() {
 }
 
 async function loadSelection() {
+  const generation = ++selectionGeneration;
   activeSet = selectedSet();
   taskIndex = 0;
   savedAnnotations = new Map();
   routeDrafts = new Map();
+  const capabilities = selectionCapabilities(activeSet);
   ready = false;
-  busy = true;
+  busy = capabilities.canAnnotate;
+  ui.image.onload = null;
+  ui.image.onerror = null;
+  ui.image.removeAttribute('src');
+  ui.image.alt = '';
+  ui.image.hidden = true;
+  ui.placeholder.hidden = capabilities.canLoadImage;
+  ui.stage.dataset.imageryStatus = activeSet.imageryStatus;
+  showMarker(null);
+  showRoute([]);
   renderTask();
+
+  if (!capabilities.canFetchRows) {
+    setStatus('Overhead map capture pending. Browse prompts and sources while annotation is locked.');
+    return;
+  }
+
   setStatus('Loading saved annotations…');
 
   try {
@@ -224,7 +245,8 @@ async function loadSelection() {
         return response.json();
       }
     );
-    const [rows] = await Promise.all([rowsRequest, loadImage()]);
+    const [rows] = await Promise.all([rowsRequest, loadImage(activeSet)]);
+    if (generation !== selectionGeneration) return;
     savedAnnotations = parseAnnotationRows(rows);
     routeDrafts = seedRouteDrafts(savedAnnotations);
     const firstUnsaved = activeSet.tasks.findIndex(([taskId]) => !savedAnnotations.has(taskId));
@@ -232,9 +254,11 @@ async function loadSelection() {
     taskIndex = firstUnsaved < 0 ? 0 : firstUnsaved;
     ready = true;
     busy = false;
+    ui.image.hidden = false;
     renderTask();
     setStatus(`${savedCount} of ${activeSet.tasks.length} annotations saved.`);
   } catch (error) {
+    if (generation !== selectionGeneration) return;
     console.error(error);
     busy = false;
     renderTask();
@@ -243,6 +267,7 @@ async function loadSelection() {
 }
 
 async function saveAnnotation(points, advance) {
+  if (!ready || busy || !selectionCapabilities(activeSet).canSave) return;
   const task = currentTask();
   const taskId = task[0];
   const metadata = taskMetadata(task);
@@ -294,7 +319,7 @@ async function saveAnnotation(points, advance) {
 }
 
 ui.stage.addEventListener('click', (event) => {
-  if (!ready || busy) return;
+  if (!ready || busy || !selectionCapabilities(activeSet).canClickMap) return;
   const rect = ui.stage.getBoundingClientRect();
   const clamp = (number) => Math.max(0, Math.min(1, number));
   const point = {
@@ -316,6 +341,7 @@ ui.stage.addEventListener('click', (event) => {
 });
 
 ui.undoRoute.addEventListener('click', () => {
+  if (!ready || busy || !selectionCapabilities(activeSet).canAnnotate) return;
   const task = currentTask();
   const draft = undoLastWaypoint(ensureRouteDraft(task[0]));
   routeDrafts.set(task[0], draft);
@@ -324,6 +350,7 @@ ui.undoRoute.addEventListener('click', () => {
 });
 
 ui.saveRoute.addEventListener('click', () => {
+  if (!ready || busy || !selectionCapabilities(activeSet).canSave) return;
   const task = currentTask();
   const metadata = taskMetadata(task);
   const draft = ensureRouteDraft(task[0]);
@@ -335,6 +362,9 @@ ui.saveRoute.addEventListener('click', () => {
 });
 
 function taskStatus() {
+  if (!selectionCapabilities(activeSet).canAnnotate) {
+    return 'Overhead map capture pending. Prompts and sources remain available.';
+  }
   const task = currentTask();
   const metadata = taskMetadata(task);
   if (metadata.kind === 'point') {

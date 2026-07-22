@@ -64,12 +64,24 @@
     };
   }
 
+  function selectionCapabilities(set) {
+    const canAnnotate = set.imageryStatus === 'ready' && typeof set.mapImage === 'string';
+    return {
+      canAnnotate,
+      canLoadImage: canAnnotate,
+      canFetchRows: canAnnotate,
+      canSave: canAnnotate,
+      canClickMap: canAnnotate
+    };
+  }
+
   return {
     appendWaypoint,
     buildAnnotationPayload,
     hasMinimumPoints,
     parseAnnotationRows,
     seedRouteDrafts,
+    selectionCapabilities,
     setRouteOverlayHidden,
     svgPolylinePoints,
     taskMetadata,

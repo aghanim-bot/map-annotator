@@ -31,8 +31,19 @@ assert.equal(ids.length, 270);
 assert.equal(new Set(ids).size, 270);
 assert.equal(readyMaps.length, 17);
 assert.equal(pendingMaps.length, 13);
-assert.equal(annotationSets.length, 51);
-assert.equal(annotationSets.flatMap(({ tasks }) => tasks).length, 153);
-assert.ok(pendingMaps.every(({ mapId }) => !annotationSets.some((set) => set.mapId === mapId)));
+assert.equal(annotationSets.length, 90);
+assert.equal(annotationSets.flatMap(({ tasks }) => tasks).length, 270);
+const annotatableSets = annotationSets.filter(({ imageryStatus }) => imageryStatus === 'ready');
+const pendingSets = annotationSets.filter(({ imageryStatus }) => imageryStatus === 'pending');
+assert.equal(annotatableSets.length, 51);
+assert.equal(annotatableSets.flatMap(({ tasks }) => tasks).length, 153);
+assert.equal(pendingSets.length, 39);
+assert.equal(pendingSets.flatMap(({ tasks }) => tasks).length, 117);
+assert.ok(annotatableSets.every(({ mapImage }) => typeof mapImage === 'string'));
+assert.ok(pendingSets.every(({ mapImage }) => mapImage === null));
 
-process.stdout.write('TOTAL keys=90 tasks=270 uniqueIds=270 ready=17 pending=13 liveSets=51 liveTasks=153\n');
+process.stdout.write(
+  'TOTAL keys=90 tasks=270 uniqueIds=270 ready=17 pending=13 ' +
+  'selectableSets=90 selectableTasks=270 annotatableSets=51 annotatableTasks=153 ' +
+  'pendingSets=39 pendingTasks=117\n'
+);
