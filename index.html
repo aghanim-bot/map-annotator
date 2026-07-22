@@ -7,6 +7,8 @@
     <title>Map Annotator</title>
     <link rel="stylesheet" href="./style.css">
     <script src="./annotation-model.js" defer></script>
+    <script src="./data/competitive-catalog.js" defer></script>
+    <script src="./catalog-browser.js" defer></script>
     <script src="./app.js" defer></script>
   </head>
   <body>
@@ -80,6 +82,46 @@
       <div class="status-row">
         <p id="status" class="status" role="status" aria-live="polite">Loading saved annotations…</p>
       </div>
+
+      <section class="catalog-section" aria-labelledby="catalog-heading">
+        <header class="catalog-header">
+          <p class="eyebrow">Competitive prompt catalog</p>
+          <h2 id="catalog-heading">Open-ended human annotation prompts</h2>
+          <p class="catalog-status">Collection prompt — human selection required</p>
+          <p class="catalog-intro">
+            Choose a map, hero, and map phase to browse three prompts. This catalog does not
+            provide map imagery or saved locations.
+          </p>
+        </header>
+
+        <div class="catalog-selectors" aria-label="Prompt catalog selection">
+          <label>
+            <span>Map</span>
+            <select id="catalog-map-select" aria-label="Catalog map"></select>
+          </label>
+          <label>
+            <span>Hero</span>
+            <select id="catalog-hero-select" aria-label="Catalog hero"></select>
+          </label>
+          <label>
+            <span>Map phase</span>
+            <select id="catalog-phase-select" aria-label="Catalog map phase"></select>
+          </label>
+        </div>
+
+        <div class="catalog-context" aria-live="polite">
+          <p><strong>Mode:</strong> <span id="catalog-mode"></span></p>
+          <p><strong>Phase:</strong> <span id="catalog-phase"></span></p>
+        </div>
+
+        <ol id="catalog-prompts" class="catalog-prompts" aria-label="Selected collection prompts"></ol>
+
+        <div class="catalog-sources" aria-label="Catalog sources">
+          <span>Sources:</span>
+          <a id="catalog-map-source" target="_blank" rel="noopener noreferrer">Map information ↗</a>
+          <a id="catalog-hero-source" target="_blank" rel="noopener noreferrer">Hero information ↗</a>
+        </div>
+      </section>
 
       <noscript>This app requires JavaScript to load and save map annotations.</noscript>
     </main>

@@ -258,8 +258,97 @@ select:disabled {
 
 .status[data-tone="error"] { color: #a12632; }
 
+.catalog-section {
+  margin-top: clamp(2.5rem, 7vw, 4.5rem);
+  padding: clamp(1rem, 3vw, 1.5rem);
+  border: 1px solid #cdd9e0;
+  border-radius: 0.75rem;
+  background: #fff;
+}
+
+.catalog-header h2 { margin: 0 0 0.5rem; }
+
+.catalog-status {
+  display: inline-block;
+  margin: 0 0 0.75rem;
+  padding: 0.3rem 0.55rem;
+  border-radius: 0.35rem;
+  color: #553b05;
+  background: #fff0c2;
+  font-weight: 750;
+}
+
+.catalog-intro { margin: 0 0 1rem; color: #536674; }
+
+.catalog-selectors {
+  display: grid;
+  grid-template-columns: 1.35fr 1fr 1.35fr;
+  gap: 0.85rem;
+}
+
+.catalog-selectors label {
+  display: grid;
+  gap: 0.4rem;
+  min-width: 0;
+  color: #304957;
+  font-size: 0.82rem;
+  font-weight: 700;
+}
+
+.catalog-context {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem 1.5rem;
+  margin-top: 1rem;
+}
+
+.catalog-context p { margin: 0; }
+
+.catalog-prompts {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0.75rem;
+  margin: 1rem 0;
+  padding: 0;
+  list-style: none;
+  counter-reset: catalog-prompt;
+}
+
+.catalog-prompts li {
+  padding: 1rem;
+  border: 1px solid #d6dfe5;
+  border-radius: 0.6rem;
+  counter-increment: catalog-prompt;
+}
+
+.catalog-prompts li::before {
+  content: "Prompt " counter(catalog-prompt);
+  color: #446173;
+  font-size: 0.75rem;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.catalog-prompts p { margin: 0.45rem 0 0.75rem; line-height: 1.45; }
+
+.catalog-task-kind { color: #536674; font-size: 0.85rem; font-weight: 700; }
+
+.catalog-sources {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem 1rem;
+  align-items: center;
+  color: #536674;
+  font-size: 0.92rem;
+}
+
+.catalog-sources a { color: #0f4c6a; font-weight: 700; }
+
 @media (max-width: 42rem) {
-  .selector-panel {
+  .selector-panel,
+  .catalog-selectors,
+  .catalog-prompts {
     grid-template-columns: 1fr;
   }
 }

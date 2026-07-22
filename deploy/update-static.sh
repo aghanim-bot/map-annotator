@@ -72,6 +72,8 @@ validate_tree() {
 validate_file "$checkout/index.html"
 validate_file "$checkout/style.css"
 validate_file "$checkout/annotation-model.js"
+validate_file "$checkout/data/competitive-catalog.js"
+validate_file "$checkout/catalog-browser.js"
 validate_file "$checkout/app.js"
 validate_tree "$checkout/maps"
 [ -n "$(find "$checkout/maps" -type f -print -quit)" ] || fail "maps directory contains no files"
@@ -80,6 +82,10 @@ grep -F 'href="./style.css"' "$checkout/index.html" >/dev/null || \
     fail "index.html must reference ./style.css"
 grep -F 'src="./annotation-model.js"' "$checkout/index.html" >/dev/null || \
     fail "index.html must reference ./annotation-model.js"
+grep -F 'src="./data/competitive-catalog.js"' "$checkout/index.html" >/dev/null || \
+    fail "index.html must reference ./data/competitive-catalog.js"
+grep -F 'src="./catalog-browser.js"' "$checkout/index.html" >/dev/null || \
+    fail "index.html must reference ./catalog-browser.js"
 grep -F 'src="./app.js"' "$checkout/index.html" >/dev/null || \
     fail "index.html must reference ./app.js"
 
@@ -105,10 +111,14 @@ install -d -m 0755 "$public_dir"
 
 style_asset=style.$commit.css
 model_asset=annotation-model.$commit.js
+catalog_asset=competitive-catalog.$commit.js
+catalog_browser_asset=catalog-browser.$commit.js
 app_asset=app.$commit.js
 
 install -m 0644 "$checkout/style.css" "$public_dir/$style_asset"
 install -m 0644 "$checkout/annotation-model.js" "$public_dir/$model_asset"
+install -m 0644 "$checkout/data/competitive-catalog.js" "$public_dir/$catalog_asset"
+install -m 0644 "$checkout/catalog-browser.js" "$public_dir/$catalog_browser_asset"
 install -m 0644 "$checkout/app.js" "$public_dir/$app_asset"
 
 install_tree "$checkout/maps" "$public_dir/maps"
@@ -127,6 +137,8 @@ trap cleanup 0
 sed \
     -e "s|href=\"./style.css\"|href=\"./$style_asset\"|" \
     -e "s|src=\"./annotation-model.js\"|src=\"./$model_asset\"|" \
+    -e "s|src=\"./data/competitive-catalog.js\"|src=\"./$catalog_asset\"|" \
+    -e "s|src=\"./catalog-browser.js\"|src=\"./$catalog_browser_asset\"|" \
     -e "s|src=\"./app.js\"|src=\"./$app_asset\"|" \
     "$checkout/index.html" > "$index_temp"
 chmod 0644 "$index_temp"
@@ -135,6 +147,10 @@ grep -F "href=\"./$style_asset\"" "$index_temp" >/dev/null || \
     fail "generated index does not reference $style_asset"
 grep -F "src=\"./$model_asset\"" "$index_temp" >/dev/null || \
     fail "generated index does not reference $model_asset"
+grep -F "src=\"./$catalog_asset\"" "$index_temp" >/dev/null || \
+    fail "generated index does not reference $catalog_asset"
+grep -F "src=\"./$catalog_browser_asset\"" "$index_temp" >/dev/null || \
+    fail "generated index does not reference $catalog_browser_asset"
 grep -F "src=\"./$app_asset\"" "$index_temp" >/dev/null || \
     fail "generated index does not reference $app_asset"
 

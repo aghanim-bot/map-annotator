@@ -30,17 +30,22 @@ function createDeploymentFixture(t) {
 
   const sourceRepository = join(temporaryRoot, 'source');
   mkdirSync(join(sourceRepository, 'maps'), { recursive: true });
+  mkdirSync(join(sourceRepository, 'data'), { recursive: true });
   writeFileSync(
     join(sourceRepository, 'index.html'),
     [
       '<!doctype html>',
       '<link rel="stylesheet" href="./style.css">',
       '<script src="./annotation-model.js" defer></script>',
+      '<script src="./data/competitive-catalog.js" defer></script>',
+      '<script src="./catalog-browser.js" defer></script>',
       '<script src="./app.js" defer></script>'
     ].join('\n')
   );
   writeFileSync(join(sourceRepository, 'style.css'), 'new-style\n');
   writeFileSync(join(sourceRepository, 'annotation-model.js'), 'new-model\n');
+  writeFileSync(join(sourceRepository, 'data', 'competitive-catalog.js'), 'new-catalog\n');
+  writeFileSync(join(sourceRepository, 'catalog-browser.js'), 'new-catalog-browser\n');
   writeFileSync(join(sourceRepository, 'app.js'), 'new-app\n');
   writeFileSync(join(sourceRepository, 'maps', 'map.webp'), 'map\n');
 
@@ -88,8 +93,13 @@ test('repository index uses unversioned source assets for local serving', () => 
 
   assert.match(index, /href="\.\/style\.css"/);
   assert.match(index, /src="\.\/annotation-model\.js"/);
+  assert.match(index, /src="\.\/data\/competitive-catalog\.js"/);
+  assert.match(index, /src="\.\/catalog-browser\.js"/);
   assert.match(index, /src="\.\/app\.js"/);
-  assert.doesNotMatch(index, /(?:style\.css|annotation-model\.js|app\.js)\?/);
+  assert.doesNotMatch(
+    index,
+    /(?:style\.css|annotation-model\.js|competitive-catalog\.js|catalog-browser\.js|app\.js)\?/
+  );
 });
 
 test('publishes an index atomically only after its commit-versioned assets exist', (t) => {
@@ -137,6 +147,8 @@ exec /usr/bin/mv "$@"
   const expectedAssets = [
     `style.${fixture.commit}.css`,
     `annotation-model.${fixture.commit}.js`,
+    `competitive-catalog.${fixture.commit}.js`,
+    `catalog-browser.${fixture.commit}.js`,
     `app.${fixture.commit}.js`
   ];
   const publishedIndex = readFileSync(join(fixture.publicDirectory, 'index.html'), 'utf8');

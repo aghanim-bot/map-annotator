@@ -1,6 +1,6 @@
 # Map Annotator
 
-A dependency-free static app for saving prompt-driven point and route annotations with normalized map coordinates. The initial annotation set is Blizzard World / Cassidy / Attack on map revision `2025-11-18`.
+A dependency-free static app with two distinct workflows: saving prompt-driven point and route annotations with normalized map coordinates for audited map assets, and browsing open-ended human annotation prompts in the deployed Competitive catalog. Coordinate annotation is currently enabled only for Blizzard World / Cassidy / Attack on map revision `2025-11-18`.
 
 ## Run
 
@@ -56,9 +56,13 @@ The migration is transactional and idempotent. It adds `points`, converts each l
 
 ## Annotation tasks
 
-### Staged Competitive catalog
+### Competitive prompt catalog
 
-[`data/competitive-catalog.js`](data/competitive-catalog.js) contains 1,368 date-stamped prompts for the Competitive Role Queue 5v5 scope as of 2026-07-21. These prompts are collection scaffolding, not researched spot recommendations or live audited prompts. The catalog is data-only and available to dependency-free browser and CommonJS consumers; it is not connected to `app.js` or the live interface. Only prompts and map assets that have been audited may be wired into the live UI.
+[`data/competitive-catalog.js`](data/competitive-catalog.js) contains 1,368 date-stamped prompts for the Competitive Role Queue 5v5 scope as of 2026-07-21. The deployed prompt-catalog browser covers all 30 catalog maps and Cassidy, Hanzo, and Tracer. For any selected map, hero, and phase, it displays exactly three open-ended prompts plus the catalog's map mode, phase, and source links. Their displayed status is `Collection prompt — human selection required`; they are requests for a person to choose locations or routes and contain no coordinates.
+
+Prompt-catalog browsing is separate from coordinate annotation: it does not display a map asset, load or save PostgREST rows, or make a location available for clicking. Coordinate annotation remains enabled only when an audited map asset and task set are explicitly configured in `annotationSets` in `app.js`. The only such deployed set is currently Blizzard World / Cassidy / Attack.
+
+### Coordinate annotation tasks
 
 Add map assets under `maps/`, then add an object to `annotationSets` in `app.js`. Each map revision, hero, and mode combination needs stable IDs and at least one prompt. Every prompt must be limited to what its cited transcript and visual evidence establish and recorded in [docs/source-audit.md](docs/source-audit.md). Change a task ID when the evidence changes its semantic target so incompatible saved annotations cannot carry over. Increment `mapVersion` whenever the map image or geometry changes; saved coordinates are loaded only for an exact map ID, map version, hero, and mode match.
 
@@ -132,7 +136,7 @@ An autonomous runner such as cron or a service timer should invoke the same abso
 /var/data/static/update-map-annotator.sh
 ```
 
-The script defaults to the public `main` branch of `https://github.com/aghanim-bot/map-annotator.git`. It keeps its locked checkout in `/var/data/static/.deploy/map-annotator`. For each commit it first installs immutable `style.<commit>.css`, `annotation-model.<commit>.js`, and `app.<commit>.js` files, then generates an index referencing those exact filenames and atomically publishes `index.html` last. The repository index continues to reference the unversioned source files so serving the checkout locally still works. Map and optional render trees are copied without deleting existing files; older commit-versioned assets and unrelated files in the public directory are also left in place. The public `/var/data/static/map-annotator` directory is not a Git checkout. Override a deployment explicitly with environment variables, for example:
+The script defaults to the public `main` branch of `https://github.com/aghanim-bot/map-annotator.git`. It keeps its locked checkout in `/var/data/static/.deploy/map-annotator`. For each commit it first installs immutable `style.<commit>.css`, `annotation-model.<commit>.js`, `competitive-catalog.<commit>.js`, `catalog-browser.<commit>.js`, and `app.<commit>.js` files, then generates an index referencing those exact filenames and atomically publishes `index.html` last. The repository index continues to reference the unversioned source files so serving the checkout locally still works. Map and optional render trees are copied without deleting existing files; older commit-versioned assets and unrelated files in the public directory are also left in place. The public `/var/data/static/map-annotator` directory is not a Git checkout. Override a deployment explicitly with environment variables, for example:
 
 ```sh
 STATIC_ROOT=/srv/static REPO_URL=https://github.com/aghanim-bot/map-annotator.git BRANCH=main /var/data/static/update-map-annotator.sh
