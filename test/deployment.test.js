@@ -48,8 +48,9 @@ function createDeploymentFixture(t) {
   writeFileSync(join(sourceRepository, 'data', 'annotation-sets.js'), 'new-sets\n');
   writeFileSync(join(sourceRepository, 'app.js'), 'new-app\n');
   for (const slug of mapSlugs) {
-    writeFileSync(join(sourceRepository, 'maps', `${slug}-2026-07-22.webp`), `${slug}\n`);
+    writeFileSync(join(sourceRepository, 'maps', `${slug}-2026-07-22-r2.webp`), `${slug}\n`);
   }
+  writeFileSync(join(sourceRepository, 'maps', 'legacy-2026-07-22.webp'), 'must not publish\n');
 
   run('git', ['init', '--initial-branch=main'], { cwd: sourceRepository });
   run('git', ['config', 'user.name', 'Deployment Test'], { cwd: sourceRepository });
@@ -122,7 +123,7 @@ case $destination in
     */map-annotator/index.html)
         [ "$(cat "$destination")" = "old-index" ] || exit 91
         for map_slug in $MAP_SLUGS; do
-            [ -s "$(dirname "$destination")/maps/$map_slug-2026-07-22.webp" ] || exit 93
+            [ -s "$(dirname "$destination")/maps/$map_slug-2026-07-22-r2.webp" ] || exit 93
         done
         references=$(sed -n \\
             -e 's/.*href="\\.\\/\\([^\"]*\\)".*/\\1/p' \\
@@ -163,10 +164,15 @@ exec /usr/bin/mv "$@"
   assert.deepEqual(readFileSync(observationPath, 'utf8').trim().split('\n'), expectedAssets);
   for (const slug of mapSlugs) {
     assert.equal(
-      readFileSync(join(fixture.publicDirectory, 'maps', `${slug}-2026-07-22.webp`), 'utf8'),
+      readFileSync(join(fixture.publicDirectory, 'maps', `${slug}-2026-07-22-r2.webp`), 'utf8'),
       `${slug}\n`
     );
   }
+  assert.equal(
+    readFileSync(join(fixture.sourceRepository, 'maps', 'legacy-2026-07-22.webp'), 'utf8'),
+    'must not publish\n'
+  );
+  assert.throws(() => readFileSync(join(fixture.publicDirectory, 'maps', 'legacy-2026-07-22.webp')));
   assert.equal(readFileSync(join(fixture.publicDirectory, 'style.older.css'), 'utf8'), 'older-style\n');
   assert.equal(readFileSync(join(fixture.publicDirectory, 'app.older.js'), 'utf8'), 'older-app\n');
 });

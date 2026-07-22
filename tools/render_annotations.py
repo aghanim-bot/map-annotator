@@ -17,9 +17,9 @@ from PIL import Image, ImageDraw, ImageFont
 
 REPOSITORY_ROOT = Path(__file__).resolve().parents[1]
 DEFAULT_ENDPOINT = "https://postgrest.sirstoke.me/map_annotations"
-DEFAULT_MAP = REPOSITORY_ROOT / "maps" / "blizzard-world-2025-11-18.webp"
-DEFAULT_OUTPUT = REPOSITORY_ROOT / "renders" / "blizzard-world-cassidy-attack.png"
-DEFAULT_MAP_SHA256 = "adb3bd467550a0ffcfce319c054dca2c3b8dd1c0e3171159cf12e6f2e16ecbd3"
+DEFAULT_MAP = REPOSITORY_ROOT / "maps" / "busan-2026-07-22-r2.webp"
+DEFAULT_OUTPUT = REPOSITORY_ROOT / "renders" / "busan-cassidy-control.png"
+DEFAULT_MAP_SHA256 = "455d5208503ca387413b0fde001ca3ea8abcf1f1106087c4df33f3d11cfba902"
 MARKER_FILL = (226, 38, 54)
 MARKER_RADIUS = 16
 ROUTE_FILL = (255, 210, 74)
@@ -31,10 +31,10 @@ def parse_args() -> argparse.Namespace:
         description="Render filtered public PostgREST annotations over an immutable WebP."
     )
     parser.add_argument("--endpoint", default=DEFAULT_ENDPOINT)
-    parser.add_argument("--map-id", default="blizzard-world")
-    parser.add_argument("--map-version", default="2025-11-18")
+    parser.add_argument("--map-id", default="busan")
+    parser.add_argument("--map-version", default="2026-07-22-r2")
     parser.add_argument("--hero-id", default="cassidy")
-    parser.add_argument("--mode-id", default="attack")
+    parser.add_argument("--mode-id", default="control")
     parser.add_argument("--source-map", type=Path, default=DEFAULT_MAP)
     parser.add_argument("--output", type=Path, default=DEFAULT_OUTPUT)
     parser.add_argument(

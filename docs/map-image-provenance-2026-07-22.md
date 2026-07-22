@@ -1,40 +1,15 @@
-# Production map-image provenance — 2026-07-22
+# Production map-image provenance — 2026-07-22 r2
 
-This manifest records the source basis for the 30 immutable WebP files used by the annotation workflow. The files are coordinate surfaces for human collection prompts, not proof that a selected position or route is strategically correct.
+Production annotation is gated to 17 reviewed MapSpots assets generated on 2026-07-22. They show current-build geometry from a true near-orthographic overhead view, with no HUD or player markers. Control-map assets are labeled composites containing all three stages. These coordinate surfaces support human collection prompts; they do not establish strategic correctness.
 
-Nineteen assets are overhead, composite-layout, or aerial views. Eleven are scenic/loading-screen views; prompts on those images are intentionally limited to visible geometry and must not be interpreted as full-map routes. Source copyrights remain with their respective owners.
+## Ready production assets
 
-| Map | Published asset | Image basis | Source |
-|---|---|---|---|
-| Aatlis | `maps/aatlis-2026-07-22.webp` | scenic/loading-screen view | [https://static.wikia.nocookie.net/overwatch_gamepedia/images/e/e6/Aatlis_loading_screen.png/revision/latest?cb=20250624194631](https://static.wikia.nocookie.net/overwatch_gamepedia/images/e/e6/Aatlis_loading_screen.png/revision/latest?cb=20250624194631) |
-| Antarctic Peninsula | `maps/antarctic-peninsula-2026-07-22.webp` | aerial view | [https://static.wikia.nocookie.net/overwatch_gamepedia/images/f/f1/Antarctic_Peninsula_Sky_View.webp/revision/latest?cb=20251118174110](https://static.wikia.nocookie.net/overwatch_gamepedia/images/f/f1/Antarctic_Peninsula_Sky_View.webp/revision/latest?cb=20251118174110) |
-| Blizzard World | `maps/blizzard-world-2026-07-22.webp` | audited overhead layout | [source-audit.md](source-audit.md) |
-| Busan | `maps/busan-2026-07-22.webp` | overhead/composite layout | [https://liquipedia.net/commons/images/2/26/Busan_Top_Down_View.jpg](https://liquipedia.net/commons/images/2/26/Busan_Top_Down_View.jpg) |
-| Circuit Royal | `maps/circuit-royal-2026-07-22.webp` | scenic/loading-screen view | [https://static.wikia.nocookie.net/overwatch_gamepedia/images/1/10/Monte_Carlo.jpg/revision/latest?cb=20220926230154](https://static.wikia.nocookie.net/overwatch_gamepedia/images/1/10/Monte_Carlo.jpg/revision/latest?cb=20220926230154) |
-| Colosseo | `maps/colosseo-2026-07-22.webp` | scenic/loading-screen view | [https://static.wikia.nocookie.net/overwatch_gamepedia/images/3/32/Colosseo_%28day%29.png/revision/latest?cb=20240228131205](https://static.wikia.nocookie.net/overwatch_gamepedia/images/3/32/Colosseo_%28day%29.png/revision/latest?cb=20240228131205) |
-| Dorado | `maps/dorado-2026-07-22.webp` | overhead/composite layout | [https://liquipedia.net/commons/images/6/62/Dorado_Top_Down_View.jpg](https://liquipedia.net/commons/images/6/62/Dorado_Top_Down_View.jpg) |
-| Eichenwalde | `maps/eichenwalde-2026-07-22.webp` | overhead/composite layout | [https://liquipedia.net/commons/images/3/38/Eichenwalde_Top_Down_View.jpg](https://liquipedia.net/commons/images/3/38/Eichenwalde_Top_Down_View.jpg) |
-| Esperança | `maps/esperanca-2026-07-22.webp` | scenic/loading-screen view | [https://static.wikia.nocookie.net/overwatch_gamepedia/images/f/f5/PortugalPush.jpg/revision/latest?cb=20220926215956](https://static.wikia.nocookie.net/overwatch_gamepedia/images/f/f5/PortugalPush.jpg/revision/latest?cb=20220926215956) |
-| Havana | `maps/havana-2026-07-22.webp` | overhead/composite layout | [https://liquipedia.net/commons/images/9/9d/Havana_Top_Down_Map.jpg](https://liquipedia.net/commons/images/9/9d/Havana_Top_Down_Map.jpg) |
-| Hollywood | `maps/hollywood-2026-07-22.webp` | overhead/composite layout | [https://liquipedia.net/commons/images/0/05/Hollywood_Top_Down_View.jpg](https://liquipedia.net/commons/images/0/05/Hollywood_Top_Down_View.jpg) |
-| Ilios | `maps/ilios-2026-07-22.webp` | overhead/composite layout | [https://liquipedia.net/commons/images/0/0c/Ilios_Top_Down_View.jpg](https://liquipedia.net/commons/images/0/0c/Ilios_Top_Down_View.jpg) |
-| Junkertown | `maps/junkertown-2026-07-22.webp` | overhead/composite layout | [https://liquipedia.net/commons/images/e/e4/Junkertown_Top_Down_View.jpg](https://liquipedia.net/commons/images/e/e4/Junkertown_Top_Down_View.jpg) |
-| King's Row | `maps/kings-row-2026-07-22.webp` | overhead/composite layout | [https://liquipedia.net/commons/images/b/b8/King%27s_Row_Top_Down_View.jpg](https://liquipedia.net/commons/images/b/b8/King%27s_Row_Top_Down_View.jpg) |
-| Lijiang Tower | `maps/lijiang-tower-2026-07-22.webp` | overhead/composite layout | [https://liquipedia.net/commons/images/5/50/Lijiang_Tower_Top_Down_View.jpg](https://liquipedia.net/commons/images/5/50/Lijiang_Tower_Top_Down_View.jpg) |
-| Midtown | `maps/midtown-2026-07-22.webp` | scenic/loading-screen view | [https://static.wikia.nocookie.net/overwatch_gamepedia/images/0/0b/MidtownLoading.png/revision/latest?cb=20230423062028](https://static.wikia.nocookie.net/overwatch_gamepedia/images/0/0b/MidtownLoading.png/revision/latest?cb=20230423062028) |
-| Neon Junction | `maps/neon-junction-2026-07-22.webp` | scenic/loading-screen view | [https://static.wikia.nocookie.net/overwatch_gamepedia/images/4/4e/NeonJunction1.png/revision/latest?cb=20260524051418](https://static.wikia.nocookie.net/overwatch_gamepedia/images/4/4e/NeonJunction1.png/revision/latest?cb=20260524051418) |
-| Nepal | `maps/nepal-2026-07-22.webp` | overhead/composite layout | [https://liquipedia.net/commons/images/7/77/Nepal_Top_Down_View.jpg](https://liquipedia.net/commons/images/7/77/Nepal_Top_Down_View.jpg) |
-| New Junk City | `maps/new-junk-city-2026-07-22.webp` | overhead/composite layout | [https://liquipedia.net/commons/images/9/97/New_Junk_City_topdown.jpg](https://liquipedia.net/commons/images/9/97/New_Junk_City_topdown.jpg) |
-| New Queen Street | `maps/new-queen-street-2026-07-22.webp` | scenic/loading-screen view | [https://static.wikia.nocookie.net/overwatch_gamepedia/images/9/91/Toronto.jpg/revision/latest?cb=20220926222923](https://static.wikia.nocookie.net/overwatch_gamepedia/images/9/91/Toronto.jpg/revision/latest?cb=20220926222923) |
-| Numbani | `maps/numbani-2026-07-22.webp` | overhead/composite layout | [https://liquipedia.net/commons/images/a/a4/Numbani_Top_Down_View.jpg](https://liquipedia.net/commons/images/a/a4/Numbani_Top_Down_View.jpg) |
-| Oasis | `maps/oasis-2026-07-22.webp` | overhead/composite layout | [https://liquipedia.net/commons/images/8/8a/Oasis_Top_Down_View.jpg](https://liquipedia.net/commons/images/8/8a/Oasis_Top_Down_View.jpg) |
-| Paraíso | `maps/paraiso-2026-07-22.webp` | scenic/loading-screen view | [https://static.wikia.nocookie.net/overwatch_gamepedia/images/9/90/Para%C3%ADso_pvp.jpg/revision/latest?cb=20220630025520](https://static.wikia.nocookie.net/overwatch_gamepedia/images/9/90/Para%C3%ADso_pvp.jpg/revision/latest?cb=20220630025520) |
-| Rialto | `maps/rialto-2026-07-22.webp` | overhead/composite layout | [https://liquipedia.net/commons/images/9/9a/Rialto_Top_Down_View.jpg](https://liquipedia.net/commons/images/9/9a/Rialto_Top_Down_View.jpg) |
-| Route 66 | `maps/route-66-2026-07-22.webp` | overhead/composite layout | [https://liquipedia.net/commons/images/d/d4/Route_66_Top_Down_View.jpg](https://liquipedia.net/commons/images/d/d4/Route_66_Top_Down_View.jpg) |
-| Runasapi | `maps/runasapi-2026-07-22.webp` | scenic/loading-screen view | [https://static.wikia.nocookie.net/overwatch_gamepedia/images/0/07/Runasapi_2.jpg/revision/latest?cb=20240623180847](https://static.wikia.nocookie.net/overwatch_gamepedia/images/0/07/Runasapi_2.jpg/revision/latest?cb=20240623180847) |
-| Samoa | `maps/samoa-2026-07-22.webp` | scenic/loading-screen view | [https://static.wikia.nocookie.net/overwatch_gamepedia/images/b/b4/Samoa.jpg/revision/latest?cb=20231002031650](https://static.wikia.nocookie.net/overwatch_gamepedia/images/b/b4/Samoa.jpg/revision/latest?cb=20231002031650) |
-| Shambali Monastery | `maps/shambali-monastery-2026-07-22.webp` | scenic/loading-screen view | [https://static.wikia.nocookie.net/overwatch_gamepedia/images/8/81/ShambaliEscort.png/revision/latest?cb=20230421235244](https://static.wikia.nocookie.net/overwatch_gamepedia/images/8/81/ShambaliEscort.png/revision/latest?cb=20230421235244) |
-| Suravasa | `maps/suravasa-2026-07-22.webp` | overhead/composite layout | [https://liquipedia.net/commons/images/2/23/Suravasa_topdown.jpg](https://liquipedia.net/commons/images/2/23/Suravasa_topdown.jpg) |
-| Watchpoint: Gibraltar | `maps/watchpoint-gibraltar-2026-07-22.webp` | overhead/composite layout | [https://liquipedia.net/commons/images/7/73/Watchpoint_Gibraltar_Top_Down_View.jpg](https://liquipedia.net/commons/images/7/73/Watchpoint_Gibraltar_Top_Down_View.jpg) |
+Busan, Colosseo, Dorado, Esperança, Havana, Ilios, King's Row, Lijiang Tower, Midtown, Nepal, New Queen Street, Numbani, Oasis, Runasapi, Samoa, Shambali Monastery, and Suravasa use `maps/<slug>-2026-07-22-r2.webp`.
 
-Integrity hashes are stored in [`maps/SHA256SUMS-2026-07-22.txt`](../maps/SHA256SUMS-2026-07-22.txt).
+The 17 r2 files are the only map images shipped by the current repository and the only images referenced by annotation sets. Their source captures came from MapSpots (`https://mapspots.net/maps/...`); 29 decoded source files were visually reviewed, and the six Control maps were assembled into labeled three-stage composites on 2026-07-22. Original downloaded captures and the exact source manifest are retained outside the repository at `/opt/data/annotated-maps/mapspots-overhead-20260722/`.
+
+## Awaiting current overhead captures
+
+Aatlis, Antarctic Peninsula, Blizzard World, Circuit Royal, Eichenwalde, Hollywood, Junkertown, Neon Junction, New Junk City, Paraíso, Rialto, Route 66, and Watchpoint: Gibraltar remain in pool metadata with `imageryStatus: "pending"`. They are not selectable, have no generated annotation sets, and are not deployed.
+
+Earlier audit documents describe historical candidates and must not be read as current production approval. The required handoff for completing pending maps is [`manual-overhead-capture-spec.md`](manual-overhead-capture-spec.md).

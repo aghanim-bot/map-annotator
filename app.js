@@ -11,7 +11,7 @@ const {
   taskMetadata,
   undoLastWaypoint
 } = window.AnnotationModel;
-const { annotationSets } = window.AnnotationSets;
+const { mapPool, pendingMaps, annotationSets } = window.AnnotationSets;
 
 const API =
   'https://anycors.sirstoke.me/' +
@@ -37,6 +37,10 @@ const ui = {
   next: document.querySelector('#next-button'),
   status: document.querySelector('#status')
 };
+
+document.querySelector('#imagery-availability').textContent =
+  `${mapPool.length - pendingMaps.length} of ${mapPool.length} maps ready · ` +
+  `${pendingMaps.length} awaiting current overhead captures`;
 
 let activeSet;
 let taskIndex = 0;

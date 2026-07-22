@@ -75,9 +75,9 @@ validate_file "$checkout/annotation-model.js"
 validate_file "$checkout/data/annotation-sets.js"
 validate_file "$checkout/app.js"
 validate_tree "$checkout/maps"
-map_slugs='antarctic-peninsula busan ilios lijiang-tower nepal oasis samoa circuit-royal dorado havana junkertown rialto route-66 shambali-monastery watchpoint-gibraltar aatlis new-junk-city suravasa blizzard-world eichenwalde hollywood kings-row midtown neon-junction numbani paraiso colosseo esperanca new-queen-street runasapi'
+map_slugs='busan colosseo dorado esperanca havana ilios kings-row lijiang-tower midtown nepal new-queen-street numbani oasis runasapi samoa shambali-monastery suravasa'
 for map_slug in $map_slugs; do
-    map_asset=$checkout/maps/$map_slug-2026-07-22.webp
+    map_asset=$checkout/maps/$map_slug-2026-07-22-r2.webp
     validate_file "$map_asset"
     [ -s "$map_asset" ] || fail "required map asset is empty: $map_asset"
 done
@@ -121,7 +121,10 @@ install -m 0644 "$checkout/annotation-model.js" "$public_dir/$model_asset"
 install -m 0644 "$checkout/data/annotation-sets.js" "$public_dir/$sets_asset"
 install -m 0644 "$checkout/app.js" "$public_dir/$app_asset"
 
-install_tree "$checkout/maps" "$public_dir/maps"
+install -d -m 0755 "$public_dir/maps"
+for map_slug in $map_slugs; do
+    install -m 0644 "$checkout/maps/$map_slug-2026-07-22-r2.webp" "$public_dir/maps/$map_slug-2026-07-22-r2.webp"
+done
 if [ "$include_renders" -eq 1 ]; then
     install_tree "$checkout/renders" "$public_dir/renders"
 fi

@@ -7,38 +7,43 @@
 })(typeof globalThis === 'object' ? globalThis : this, function () {
   'use strict';
 
-  const maps = [
-    ['antarctic-peninsula', 'Antarctic Peninsula', 'control'],
-    ['busan', 'Busan', 'control'],
-    ['ilios', 'Ilios', 'control'],
-    ['lijiang-tower', 'Lijiang Tower', 'control'],
-    ['nepal', 'Nepal', 'control'],
-    ['oasis', 'Oasis', 'control'],
-    ['samoa', 'Samoa', 'control'],
-    ['circuit-royal', 'Circuit Royal', 'escort'],
-    ['dorado', 'Dorado', 'escort'],
-    ['havana', 'Havana', 'escort'],
-    ['junkertown', 'Junkertown', 'escort'],
-    ['rialto', 'Rialto', 'escort'],
-    ['route-66', 'Route 66', 'escort'],
-    ['shambali-monastery', 'Shambali Monastery', 'escort'],
-    ['watchpoint-gibraltar', 'Watchpoint: Gibraltar', 'escort'],
-    ['aatlis', 'Aatlis', 'flashpoint'],
-    ['new-junk-city', 'New Junk City', 'flashpoint'],
-    ['suravasa', 'Suravasa', 'flashpoint'],
-    ['blizzard-world', 'Blizzard World', 'hybrid'],
-    ['eichenwalde', 'Eichenwalde', 'hybrid'],
-    ['hollywood', 'Hollywood', 'hybrid'],
-    ['kings-row', "King's Row", 'hybrid'],
-    ['midtown', 'Midtown', 'hybrid'],
-    ['neon-junction', 'Neon Junction', 'hybrid'],
-    ['numbani', 'Numbani', 'hybrid'],
-    ['paraiso', 'Paraíso', 'hybrid'],
-    ['colosseo', 'Colosseo', 'push'],
-    ['esperanca', 'Esperança', 'push'],
-    ['new-queen-street', 'New Queen Street', 'push'],
-    ['runasapi', 'Runasapi', 'push']
-  ];
+  const mapPool = [
+    ['antarctic-peninsula', 'Antarctic Peninsula', 'control', 'pending'],
+    ['busan', 'Busan', 'control', 'ready'],
+    ['ilios', 'Ilios', 'control', 'ready'],
+    ['lijiang-tower', 'Lijiang Tower', 'control', 'ready'],
+    ['nepal', 'Nepal', 'control', 'ready'],
+    ['oasis', 'Oasis', 'control', 'ready'],
+    ['samoa', 'Samoa', 'control', 'ready'],
+    ['circuit-royal', 'Circuit Royal', 'escort', 'pending'],
+    ['dorado', 'Dorado', 'escort', 'ready'],
+    ['havana', 'Havana', 'escort', 'ready'],
+    ['junkertown', 'Junkertown', 'escort', 'pending'],
+    ['rialto', 'Rialto', 'escort', 'pending'],
+    ['route-66', 'Route 66', 'escort', 'pending'],
+    ['shambali-monastery', 'Shambali Monastery', 'escort', 'ready'],
+    ['watchpoint-gibraltar', 'Watchpoint: Gibraltar', 'escort', 'pending'],
+    ['aatlis', 'Aatlis', 'flashpoint', 'pending'],
+    ['new-junk-city', 'New Junk City', 'flashpoint', 'pending'],
+    ['suravasa', 'Suravasa', 'flashpoint', 'ready'],
+    ['blizzard-world', 'Blizzard World', 'hybrid', 'pending'],
+    ['eichenwalde', 'Eichenwalde', 'hybrid', 'pending'],
+    ['hollywood', 'Hollywood', 'hybrid', 'pending'],
+    ['kings-row', "King's Row", 'hybrid', 'ready'],
+    ['midtown', 'Midtown', 'hybrid', 'ready'],
+    ['neon-junction', 'Neon Junction', 'hybrid', 'pending'],
+    ['numbani', 'Numbani', 'hybrid', 'ready'],
+    ['paraiso', 'Paraíso', 'hybrid', 'pending'],
+    ['colosseo', 'Colosseo', 'push', 'ready'],
+    ['esperanca', 'Esperança', 'push', 'ready'],
+    ['new-queen-street', 'New Queen Street', 'push', 'ready'],
+    ['runasapi', 'Runasapi', 'push', 'ready']
+  ].map(([mapId, mapName, modeId, imageryStatus]) => ({
+    mapId, mapName, modeId, imageryStatus
+  }));
+
+  const readyMaps = mapPool.filter(({ imageryStatus }) => imageryStatus === 'ready');
+  const pendingMaps = mapPool.filter(({ imageryStatus }) => imageryStatus === 'pending');
 
   const heroes = [
     ['cassidy', 'Cassidy', [
@@ -64,12 +69,12 @@
   const titleCase = (value) => value.replace(/(^|-)([a-z])/g, (_, prefix, letter) =>
     `${prefix ? ' ' : ''}${letter.toUpperCase()}`);
 
-  const annotationSets = maps.flatMap(([mapId, mapName, modeId]) =>
+  const annotationSets = readyMaps.flatMap(({ mapId, mapName, modeId }) =>
     heroes.map(([heroId, heroName, prompts]) => ({
       mapId,
-      mapVersion: '2026-07-22',
+      mapVersion: '2026-07-22-r2',
       mapName,
-      mapImage: `./maps/${mapId}-2026-07-22.webp`,
+      mapImage: `./maps/${mapId}-2026-07-22-r2.webp`,
       heroId,
       heroName,
       modeId,
@@ -83,5 +88,5 @@
     }))
   );
 
-  return { annotationSets };
+  return { mapPool, readyMaps, pendingMaps, annotationSets };
 });

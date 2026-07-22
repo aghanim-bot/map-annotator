@@ -1,8 +1,8 @@
 # Map Annotator
 
-A dependency-free static app for collecting human point and route judgments on game-map images. The production corpus covers the 30 Competitive Role Queue 5v5 maps dated 2026-07-21 and exactly Cassidy, Hanzo, and Tracer.
+A dependency-free static app for collecting human point and route judgments on game-map images. Metadata retains the full 30-map Competitive Role Queue 5v5 pool dated 2026-07-21 and exactly Cassidy, Hanzo, and Tracer.
 
-The 90 selectable annotation sets (30 maps × 3 heroes) each contain four prompts, for 360 tasks total. Prompts ask people to select geometry visible in the corresponding map image; they are collection prompts, not audited recommendations. Nineteen image bases are overhead, composite-layout, or aerial views; eleven are scenic/loading-screen views, so no prompt assumes unseen geometry.
+The reviewed imagery gate currently makes 17 maps selectable. Their 51 annotation sets (17 maps × 3 heroes) each contain four prompts, for 204 tasks total. The other 13 maps remain explicit pending metadata and cannot produce a prompt. Every selectable image is a current, true overhead MapSpots capture; Control maps use labeled three-stage composites.
 
 ## Run
 
@@ -20,7 +20,7 @@ https://anycors.sirstoke.me/https://postgrest.sirstoke.me/map_annotations
 
 ## Annotation data and assets
 
-[`data/annotation-sets.js`](data/annotation-sets.js) is a dependency-free browser/CommonJS module containing the generated annotation sets. Each set selects one immutable `maps/<map-slug>-2026-07-22.webp` image and has stable semantic task IDs. The selectors retain map, hero, and mode selection; Previous and Next navigate the four tasks. Image source, basis, and integrity information is recorded in [`docs/map-image-provenance-2026-07-22.md`](docs/map-image-provenance-2026-07-22.md).
+[`data/annotation-sets.js`](data/annotation-sets.js) is a dependency-free browser/CommonJS module containing full-pool imagery metadata plus annotation sets derived only from ready maps. Each set selects one immutable `maps/<map-slug>-2026-07-22-r2.webp` image and has stable semantic task IDs. The selectors retain map, hero, and mode selection; Previous and Next navigate the four tasks. Current production status is recorded in [`docs/map-image-provenance-2026-07-22.md`](docs/map-image-provenance-2026-07-22.md); the capture handoff for missing maps is in [`docs/manual-overhead-capture-spec.md`](docs/manual-overhead-capture-spec.md).
 
 Point tasks save immediately. Route tasks collect ordered waypoints locally, require at least two points, and save only when **Save route** is pressed. Existing PostgREST load/upsert behavior is unchanged. Rows are keyed by:
 
@@ -41,7 +41,7 @@ sh -n deploy/update-static.sh
 git diff --check
 ```
 
-The Node suite verifies corpus counts and IDs, metadata, all 30 nonempty dated images, removal of the former catalog, database contracts, rendering, and atomic deployment ordering. The PostgreSQL integration test skips explicitly when Docker is unavailable.
+The Node suite verifies the 30-record pool, 17/13 imagery gate, 51 sets and 204 tasks, r2-only image references, database contracts, rendering, and atomic deployment ordering. The PostgreSQL integration test skips explicitly when Docker is unavailable.
 
 ## Render annotations
 
@@ -49,6 +49,6 @@ The deterministic Pillow renderer in [`tools/render_annotations.py`](tools/rende
 
 ## Deploy
 
-[`deploy/update-static.sh`](deploy/update-static.sh) maintains a locked checkout, validates every required runtime file and all 30 dated map images, installs commit-versioned CSS and JavaScript plus the image tree, then atomically publishes `index.html` last. The repository index retains unversioned paths for local serving. Older immutable assets are retained.
+[`deploy/update-static.sh`](deploy/update-static.sh) maintains a locked checkout, validates the runtime files and 17 ready r2 map images, installs commit-versioned CSS and JavaScript plus only those ready images, then atomically publishes `index.html` last. The repository index retains unversioned paths for local serving. Existing versioned JavaScript assets remain immutable.
 
 The updater defaults to `/var/data/static`, the public `main` branch, and the repository URL declared in the script. Override `STATIC_ROOT`, `REPO_URL`, or `BRANCH` explicitly when needed. No deployment is performed by the test suite.
