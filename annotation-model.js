@@ -44,6 +44,10 @@
     return points.length >= minimum;
   }
 
+  function normalizeAnnotationTool(tool) {
+    return tool === 'route' ? 'route' : 'point';
+  }
+
   function svgPolylinePoints(points) {
     const coordinate = (value) => String(Number((value * 100).toFixed(6)));
     return points.map((point) => `${coordinate(point.x)},${coordinate(point.y)}`).join(' ');
@@ -79,6 +83,7 @@
     appendWaypoint,
     buildAnnotationPayload,
     hasMinimumPoints,
+    normalizeAnnotationTool,
     parseAnnotationRows,
     seedRouteDrafts,
     selectionCapabilities,

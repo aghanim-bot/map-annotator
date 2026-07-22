@@ -4,12 +4,12 @@ const {
   appendWaypoint,
   buildAnnotationPayload,
   hasMinimumPoints,
+  normalizeAnnotationTool,
   parseAnnotationRows,
   seedRouteDrafts,
   selectionCapabilities,
   setRouteOverlayHidden,
   svgPolylinePoints,
-  taskMetadata,
   undoLastWaypoint
 } = window.AnnotationModel;
 const { mapPool, pendingMaps, annotationSets } = window.AnnotationSets;
@@ -35,6 +35,7 @@ const ui = {
   routeActions: document.querySelector('#route-actions'),
   undoRoute: document.querySelector('#undo-route-button'),
   saveRoute: document.querySelector('#save-route-button'),
+  annotationTools: [...document.querySelectorAll('input[name="annotation-tool"]')],
   previous: document.querySelector('#previous-button'),
   next: document.querySelector('#next-button'),
   status: document.querySelector('#status')
@@ -51,6 +52,7 @@ let routeDrafts = new Map();
 let ready = false;
 let busy = false;
 let selectionGeneration = 0;
+let annotationTool = 'point';
 
 const mapKey = (set) => `${set.mapId}:${set.mapVersion}`;
 
@@ -142,16 +144,18 @@ function updateControls() {
   const capabilities = selectionCapabilities(activeSet);
   const annotationDisabled = !ready || busy || !capabilities.canAnnotate;
   const task = currentTask();
-  const metadata = taskMetadata(task);
-  const routePoints = metadata.kind === 'route' ? ensureRouteDraft(task[0]) : [];
+  const routePoints = annotationTool === 'route' ? ensureRouteDraft(task[0]) : [];
   ui.stage.setAttribute('aria-disabled', annotationDisabled);
   ui.previous.disabled = busy || taskIndex === 0;
   ui.next.disabled = busy || taskIndex === activeSet.tasks.length - 1;
   ui.undoRoute.disabled = annotationDisabled || routePoints.length === 0;
-  ui.saveRoute.disabled = annotationDisabled || !hasMinimumPoints(routePoints, metadata.minPoints);
+  ui.saveRoute.disabled = annotationDisabled || !hasMinimumPoints(routePoints, 2);
   ui.map.disabled = busy;
   ui.hero.disabled = busy;
   ui.mode.disabled = busy;
+  ui.annotationTools.forEach((control) => {
+    control.disabled = busy;
+  });
 }
 
 function renderSource(source) {
@@ -173,12 +177,11 @@ function renderSource(source) {
 function renderTask() {
   const task = currentTask();
   const [taskId, prompt, source] = task;
-  const metadata = taskMetadata(task);
   ui.progress.textContent = `Prompt ${taskIndex + 1} of ${activeSet.tasks.length}`;
   ui.prompt.textContent = prompt;
   renderSource(source);
-  ui.routeActions.hidden = metadata.kind !== 'route' || !selectionCapabilities(activeSet).canAnnotate;
-  if (metadata.kind === 'route') {
+  ui.routeActions.hidden = annotationTool !== 'route' || !selectionCapabilities(activeSet).canAnnotate;
+  if (annotationTool === 'route') {
     showMarker(null);
     showRoute(ensureRouteDraft(taskId));
   } else {
@@ -270,11 +273,10 @@ async function saveAnnotation(points, advance) {
   if (!ready || busy || !selectionCapabilities(activeSet).canSave) return;
   const task = currentTask();
   const taskId = task[0];
-  const metadata = taskMetadata(task);
   const url = new URL(API);
   url.searchParams.set('on_conflict', 'map_id,map_version,hero_id,mode_id,task_id');
   busy = true;
-  if (metadata.kind === 'point') showMarker(points[0]);
+  if (annotationTool === 'point') showMarker(points[0]);
   updateControls();
   setStatus('Saving…');
 
@@ -295,12 +297,10 @@ async function saveAnnotation(points, advance) {
       taskId,
       points.map((point) => ({ ...point }))
     );
-    if (metadata.kind === 'route') {
-      routeDrafts.set(
-        taskId,
-        points.map((point) => ({ ...point }))
-      );
-    }
+    routeDrafts.set(
+      taskId,
+      points.map((point) => ({ ...point }))
+    );
     if (advance && taskIndex < activeSet.tasks.length - 1) taskIndex += 1;
     busy = false;
     renderTask();
@@ -310,7 +310,7 @@ async function saveAnnotation(points, advance) {
     busy = false;
     renderTask();
     setStatus(
-      metadata.kind === 'route'
+      annotationTool === 'route'
         ? 'Save failed — press Save route to try again.'
         : 'Save failed — click the map to try again.',
       'error'
@@ -327,8 +327,7 @@ ui.stage.addEventListener('click', (event) => {
     y: clamp((event.clientY - rect.top) / rect.height)
   };
   const task = currentTask();
-  const metadata = taskMetadata(task);
-  if (metadata.kind === 'route') {
+  if (annotationTool === 'route') {
     const draft = appendWaypoint(ensureRouteDraft(task[0]), point);
     routeDrafts.set(task[0], draft);
     renderTask();
@@ -352,10 +351,9 @@ ui.undoRoute.addEventListener('click', () => {
 ui.saveRoute.addEventListener('click', () => {
   if (!ready || busy || !selectionCapabilities(activeSet).canSave) return;
   const task = currentTask();
-  const metadata = taskMetadata(task);
   const draft = ensureRouteDraft(task[0]);
-  if (!hasMinimumPoints(draft, metadata.minPoints)) {
-    setStatus(`Add at least ${metadata.minPoints} waypoints before saving.`, 'error');
+  if (!hasMinimumPoints(draft, 2)) {
+    setStatus('Add at least 2 waypoints before saving.', 'error');
     return;
   }
   void saveAnnotation(draft, true);
@@ -366,8 +364,7 @@ function taskStatus() {
     return 'Overhead map capture pending. Prompts and sources remain available.';
   }
   const task = currentTask();
-  const metadata = taskMetadata(task);
-  if (metadata.kind === 'point') {
+  if (annotationTool === 'point') {
     return savedAnnotations.has(task[0]) ? 'Saved annotation' : 'Annotation not saved';
   }
 
@@ -390,6 +387,21 @@ ui.next.addEventListener('click', () => {
   taskIndex += 1;
   renderTask();
   setStatus(taskStatus());
+});
+
+function selectAnnotationTool(tool) {
+  annotationTool = normalizeAnnotationTool(tool);
+  ui.annotationTools.forEach((control) => {
+    control.checked = control.value === annotationTool;
+  });
+  renderTask();
+  setStatus(taskStatus());
+}
+
+ui.annotationTools.forEach((control) => {
+  control.addEventListener('change', () => {
+    if (control.checked) selectAnnotationTool(control.value);
+  });
 });
 
 ui.map.addEventListener('change', () => {

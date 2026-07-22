@@ -12,7 +12,8 @@ button,
 select { font: inherit; }
 
 button:focus-visible,
-select:focus-visible {
+select:focus-visible,
+input:focus-visible + span {
   outline: 3px solid rgb(19 96 143 / 35%);
   outline-offset: 2px;
 }
@@ -66,6 +67,53 @@ h1 {
   color: #304957;
   font-size: 0.82rem;
   font-weight: 700;
+}
+
+.annotation-tool {
+  display: inline-flex;
+  gap: 0.2rem;
+  margin: 0 0 1rem;
+  padding: 0.2rem;
+  border: 1px solid #bdcbd4;
+  border-radius: 0.55rem;
+  background: #fff;
+}
+
+.annotation-tool legend {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+
+.annotation-tool label { cursor: pointer; }
+
+.annotation-tool input {
+  position: absolute;
+  opacity: 0;
+}
+
+.annotation-tool span {
+  display: block;
+  min-width: 4.5rem;
+  padding: 0.5rem 0.75rem;
+  border-radius: 0.35rem;
+  color: #304957;
+  font-size: 0.88rem;
+  font-weight: 750;
+  text-align: center;
+}
+
+.annotation-tool input:checked + span {
+  color: #fff;
+  background: #0f4c6a;
+}
+
+.annotation-tool input:disabled + span {
+  cursor: not-allowed;
+  opacity: 0.55;
 }
 
 select {
