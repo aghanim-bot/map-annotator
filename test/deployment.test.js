@@ -17,6 +17,8 @@ const { join } = require('node:path');
 const repositoryRoot = join(__dirname, '..');
 const deployScriptPath = join(repositoryRoot, 'deploy', 'update-static.sh');
 const indexPath = join(repositoryRoot, 'index.html');
+const { annotationSets } = require('../data/annotation-sets.js');
+const mapSlugs = [...new Set(annotationSets.map(({ mapId }) => mapId))];
 
 function run(command, args, options = {}) {
   const result = spawnSync(command, args, { encoding: 'utf8', ...options });
@@ -37,17 +39,17 @@ function createDeploymentFixture(t) {
       '<!doctype html>',
       '<link rel="stylesheet" href="./style.css">',
       '<script src="./annotation-model.js" defer></script>',
-      '<script src="./data/competitive-catalog.js" defer></script>',
-      '<script src="./catalog-browser.js" defer></script>',
+      '<script src="./data/annotation-sets.js" defer></script>',
       '<script src="./app.js" defer></script>'
     ].join('\n')
   );
   writeFileSync(join(sourceRepository, 'style.css'), 'new-style\n');
   writeFileSync(join(sourceRepository, 'annotation-model.js'), 'new-model\n');
-  writeFileSync(join(sourceRepository, 'data', 'competitive-catalog.js'), 'new-catalog\n');
-  writeFileSync(join(sourceRepository, 'catalog-browser.js'), 'new-catalog-browser\n');
+  writeFileSync(join(sourceRepository, 'data', 'annotation-sets.js'), 'new-sets\n');
   writeFileSync(join(sourceRepository, 'app.js'), 'new-app\n');
-  writeFileSync(join(sourceRepository, 'maps', 'map.webp'), 'map\n');
+  for (const slug of mapSlugs) {
+    writeFileSync(join(sourceRepository, 'maps', `${slug}-2026-07-22.webp`), `${slug}\n`);
+  }
 
   run('git', ['init', '--initial-branch=main'], { cwd: sourceRepository });
   run('git', ['config', 'user.name', 'Deployment Test'], { cwd: sourceRepository });
@@ -93,12 +95,11 @@ test('repository index uses unversioned source assets for local serving', () => 
 
   assert.match(index, /href="\.\/style\.css"/);
   assert.match(index, /src="\.\/annotation-model\.js"/);
-  assert.match(index, /src="\.\/data\/competitive-catalog\.js"/);
-  assert.match(index, /src="\.\/catalog-browser\.js"/);
+  assert.match(index, /src="\.\/data\/annotation-sets\.js"/);
   assert.match(index, /src="\.\/app\.js"/);
   assert.doesNotMatch(
     index,
-    /(?:style\.css|annotation-model\.js|competitive-catalog\.js|catalog-browser\.js|app\.js)\?/
+    /(?:style\.css|annotation-model\.js|annotation-sets\.js|app\.js)\?/
   );
 });
 
@@ -120,6 +121,9 @@ done
 case $destination in
     */map-annotator/index.html)
         [ "$(cat "$destination")" = "old-index" ] || exit 91
+        for map_slug in $MAP_SLUGS; do
+            [ -s "$(dirname "$destination")/maps/$map_slug-2026-07-22.webp" ] || exit 93
+        done
         references=$(sed -n \\
             -e 's/.*href="\\.\\/\\([^\"]*\\)".*/\\1/p' \\
             -e 's/.*src="\\.\\/\\([^\"]*\\)".*/\\1/p' \\
@@ -139,7 +143,8 @@ exec /usr/bin/mv "$@"
     encoding: 'utf8',
     env: updaterEnvironment(fixture, {
       PATH: `${wrapperDirectory}:${process.env.PATH}`,
-      PUBLISH_OBSERVATION: observationPath
+      PUBLISH_OBSERVATION: observationPath,
+      MAP_SLUGS: mapSlugs.join(' ')
     })
   });
 
@@ -147,8 +152,7 @@ exec /usr/bin/mv "$@"
   const expectedAssets = [
     `style.${fixture.commit}.css`,
     `annotation-model.${fixture.commit}.js`,
-    `competitive-catalog.${fixture.commit}.js`,
-    `catalog-browser.${fixture.commit}.js`,
+    `annotation-sets.${fixture.commit}.js`,
     `app.${fixture.commit}.js`
   ];
   const publishedIndex = readFileSync(join(fixture.publicDirectory, 'index.html'), 'utf8');
@@ -157,6 +161,12 @@ exec /usr/bin/mv "$@"
     assert.equal(readFileSync(join(fixture.publicDirectory, asset), 'utf8').startsWith('new-'), true);
   }
   assert.deepEqual(readFileSync(observationPath, 'utf8').trim().split('\n'), expectedAssets);
+  for (const slug of mapSlugs) {
+    assert.equal(
+      readFileSync(join(fixture.publicDirectory, 'maps', `${slug}-2026-07-22.webp`), 'utf8'),
+      `${slug}\n`
+    );
+  }
   assert.equal(readFileSync(join(fixture.publicDirectory, 'style.older.css'), 'utf8'), 'older-style\n');
   assert.equal(readFileSync(join(fixture.publicDirectory, 'app.older.js'), 'utf8'), 'older-app\n');
 });

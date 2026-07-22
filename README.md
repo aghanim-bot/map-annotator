@@ -1,6 +1,8 @@
 # Map Annotator
 
-A dependency-free static app with two distinct workflows: saving prompt-driven point and route annotations with normalized map coordinates for audited map assets, and browsing open-ended human annotation prompts in the deployed Competitive catalog. Coordinate annotation is currently enabled only for Blizzard World / Cassidy / Attack on map revision `2025-11-18`.
+A dependency-free static app for collecting human point and route judgments on game-map images. The production corpus covers the 30 Competitive Role Queue 5v5 maps dated 2026-07-21 and exactly Cassidy, Hanzo, and Tracer.
+
+The 90 selectable annotation sets (30 maps × 3 heroes) each contain four prompts, for 360 tasks total. Prompts ask people to select geometry visible in the corresponding map image; they are collection prompts, not audited recommendations. Nineteen image bases are overhead, composite-layout, or aerial views; eleven are scenic/loading-screen views, so no prompt assumes unseen geometry.
 
 ## Run
 
@@ -10,134 +12,43 @@ Serve this directory with any static file server, for example:
 python3 -m http.server 8080
 ```
 
-Open `http://localhost:8080/` to inspect the UI. Live reads and writes must run from an origin accepted by the existing AnyCors configuration, such as the deployed `https://static.sirstoke.me/map-annotator/` URL.
-
-The browser connects directly to the PostgREST resource exposed from the `api` schema:
+Open `http://localhost:8080/`. Live reads and writes require an origin accepted by the existing AnyCors configuration. The browser uses:
 
 ```text
 https://anycors.sirstoke.me/https://postgrest.sirstoke.me/map_annotations
 ```
 
-PostgREST exposes `api.map_annotations` as `/map_annotations`; the schema name does not appear in the resource URL.
+## Annotation data and assets
 
-## Storage
+[`data/annotation-sets.js`](data/annotation-sets.js) is a dependency-free browser/CommonJS module containing the generated annotation sets. Each set selects one immutable `maps/<map-slug>-2026-07-22.webp` image and has stable semantic task IDs. The selectors retain map, hero, and mode selection; Previous and Next navigate the four tasks. Image source, basis, and integrity information is recorded in [`docs/map-image-provenance-2026-07-22.md`](docs/map-image-provenance-2026-07-22.md).
 
-Each annotation is one row keyed by:
+Point tasks save immediately. Route tasks collect ordered waypoints locally, require at least two points, and save only when **Save route** is pressed. Existing PostgREST load/upsert behavior is unchanged. Rows are keyed by:
 
 ```text
 (map_id, map_version, hero_id, mode_id, task_id)
 ```
 
-The row stores `points jsonb` as an ordered, non-empty array of normalized coordinate objects. A point annotation has one element, and a route has two or more elements:
-
-```json
-[{"x": 0.1, "y": 0.2}]
-```
-
-```json
-[{"x": 0.2, "y": 0.3}, {"x": 0.5, "y": 0.6}, {"x": 0.8, "y": 0.7}]
-```
-
-Waypoints are deliberately not normalized into separate database rows. The database constraint requires every element to contain only finite numeric `x` and `y` values from `0` through `1`.
-
-For a fresh database, run [sql/schema.sql](sql/schema.sql) as the table owner in a database that already has the `web_anon` role:
-
-```sh
-psql -v ON_ERROR_STOP=1 -f sql/schema.sql
-```
-
-For the existing `api.map_annotations` table with scalar `x` and `y` columns, run [sql/migrate-points-jsonb.sql](sql/migrate-points-jsonb.sql):
-
-```sh
-psql -v ON_ERROR_STOP=1 -f sql/migrate-points-jsonb.sql
-```
-
-The migration is transactional and idempotent. It adds `points`, converts each legacy row to a one-element array, validates and makes the column required, drops `x/y`, preserves table and schema grants, and sends `NOTIFY pgrst, 'reload schema'`. Rerunning it after the columns have been dropped is safe. As with any production migration, take and verify a backup first.
-
-## Annotation tasks
-
-### Competitive prompt catalog
-
-[`data/competitive-catalog.js`](data/competitive-catalog.js) contains 1,368 date-stamped prompts for the Competitive Role Queue 5v5 scope as of 2026-07-21. The deployed prompt-catalog browser covers all 30 catalog maps and Cassidy, Hanzo, and Tracer. For any selected map, hero, and phase, it displays exactly three open-ended prompts plus the catalog's map mode, phase, and source links. Their displayed status is `Collection prompt — human selection required`; they are requests for a person to choose locations or routes and contain no coordinates.
-
-Prompt-catalog browsing is separate from coordinate annotation: it does not display a map asset, load or save PostgREST rows, or make a location available for clicking. Coordinate annotation remains enabled only when an audited map asset and task set are explicitly configured in `annotationSets` in `app.js`. The only such deployed set is currently Blizzard World / Cassidy / Attack.
-
-### Coordinate annotation tasks
-
-Add map assets under `maps/`, then add an object to `annotationSets` in `app.js`. Each map revision, hero, and mode combination needs stable IDs and at least one prompt. Every prompt must be limited to what its cited transcript and visual evidence establish and recorded in [docs/source-audit.md](docs/source-audit.md). Change a task ID when the evidence changes its semantic target so incompatible saved annotations cannot carry over. Increment `mapVersion` whenever the map image or geometry changes; saved coordinates are loaded only for an exact map ID, map version, hero, and mode match.
-
-Existing three-value task tuples default to a point annotation:
-
-```js
-['stable-task-id', 'Click the requested location.', source]
-```
-
-Route tasks opt in with optional metadata:
-
-```js
-['stable-route-id', 'Trace the requested route.', source, { kind: 'route', minPoints: 2 }]
-```
-
-Point clicks save immediately and advance. Route clicks append ordered waypoints to a local draft. `Undo last` changes only that draft, and nothing is persisted until `Save route` is pressed with at least `minPoints` waypoints. Navigating back to a saved route loads an editable copy.
-
-The included `a-right-rotation-route` prompt documents the right-side Point A rotation and links to the source video at `2:13:54`.
-
-The source map is copied without transformation as `maps/blizzard-world-2025-11-18.webp` (SHA-256: `adb3bd467550a0ffcfce319c054dca2c3b8dd1c0e3171159cf12e6f2e16ecbd3`).
+The `points jsonb` field is an ordered nonempty array of normalized `{x, y}` coordinates. See [`sql/schema.sql`](sql/schema.sql) for a fresh database and [`sql/migrate-points-jsonb.sql`](sql/migrate-points-jsonb.sql) for the idempotent legacy migration.
 
 ## Test
 
-Run all dependency-free Node tests with:
+Run the complete local validation suite with:
 
 ```sh
 node --test
-```
-
-The renderer test uses `uv run --with pillow` internally. The PostgreSQL integration test creates a disposable `postgres:17-alpine` Docker container, builds the old `api` schema with two sample rows, runs the migration twice, and checks preservation, route storage, grants, dropped columns, and rejected JSONB. If the Docker command or daemon is unavailable, that test reports an explicit skip while the SQL contract test still runs.
-
-Useful direct checks are:
-
-```sh
-node --check annotation-model.js
-node --check app.js
-python3 -m py_compile tools/render_annotations.py test/test_renderer.py
+find . -type f -name '*.js' -not -path './.git/*' -exec node --check {} \;
 sh -n deploy/update-static.sh
 git diff --check
 ```
 
+The Node suite verifies corpus counts and IDs, metadata, all 30 nonempty dated images, removal of the former catalog, database contracts, rendering, and atomic deployment ordering. The PostgreSQL integration test skips explicitly when Docker is unavailable.
+
 ## Render annotations
 
-The deterministic Pillow renderer reads `task_id,points` from the public PostgREST resource, filters it to Blizzard World / Cassidy / Attack by default, and draws the returned annotations over an in-memory copy of the WebP:
-
-```sh
-uv run --with pillow tools/render_annotations.py
-```
-
-The default output is `renders/blizzard-world-cassidy-attack.png`. For the same source image and response rows, annotations and the compact task-ID legend are rendered deterministically in sorted task-ID order. Each route gets a visible ID from that order (`R2`, for example), shown both in the legend and beside the route; its waypoints remain numbered in JSONB array order. Routes use a polyline, while one-element arrays retain single-point markers. Normalized coordinates use `round(x * (width - 1))` and `round(y * (height - 1))`.
-
-The tool refuses to overwrite the immutable source map and verifies its documented SHA-256 before rendering. It does not use generative image editing or require credentials. Run `uv run --with pillow tools/render_annotations.py --help` for filter, endpoint, input, and output overrides. Do not run the live renderer until the endpoint uses the compatible `points` schema.
+The deterministic Pillow renderer in [`tools/render_annotations.py`](tools/render_annotations.py) reads saved PostgREST rows and draws point/route annotations without modifying its source image. Use `--help` for its filters and paths. Do not run it against a live endpoint until that endpoint uses the compatible `points` schema.
 
 ## Deploy
 
-The updater currently installed on the server predates immutable asset publication. Before this release is deployed, manually replace that old updater with the repository version; running the old updater against this release is not mixed-version safe. This SSH command performs the required one-time replacement directly at the path used by the `hermes-media` account on `daedalus`:
+[`deploy/update-static.sh`](deploy/update-static.sh) maintains a locked checkout, validates every required runtime file and all 30 dated map images, installs commit-versioned CSS and JavaScript plus the image tree, then atomically publishes `index.html` last. The repository index retains unversioned paths for local serving. Older immutable assets are retained.
 
-```sh
-ssh hermes-media@daedalus 'install -m 0755 /dev/stdin /var/data/static/update-map-annotator.sh' < deploy/update-static.sh
-```
-
-Run a deployment non-interactively over SSH with:
-
-```sh
-ssh hermes-media@daedalus '/var/data/static/update-map-annotator.sh'
-```
-
-An autonomous runner such as cron or a service timer should invoke the same absolute command, with no working-directory setup required:
-
-```sh
-/var/data/static/update-map-annotator.sh
-```
-
-The script defaults to the public `main` branch of `https://github.com/aghanim-bot/map-annotator.git`. It keeps its locked checkout in `/var/data/static/.deploy/map-annotator`. For each commit it first installs immutable `style.<commit>.css`, `annotation-model.<commit>.js`, `competitive-catalog.<commit>.js`, `catalog-browser.<commit>.js`, and `app.<commit>.js` files, then generates an index referencing those exact filenames and atomically publishes `index.html` last. The repository index continues to reference the unversioned source files so serving the checkout locally still works. Map and optional render trees are copied without deleting existing files; older commit-versioned assets and unrelated files in the public directory are also left in place. The public `/var/data/static/map-annotator` directory is not a Git checkout. Override a deployment explicitly with environment variables, for example:
-
-```sh
-STATIC_ROOT=/srv/static REPO_URL=https://github.com/aghanim-bot/map-annotator.git BRANCH=main /var/data/static/update-map-annotator.sh
-```
+The updater defaults to `/var/data/static`, the public `main` branch, and the repository URL declared in the script. Override `STATIC_ROOT`, `REPO_URL`, or `BRANCH` explicitly when needed. No deployment is performed by the test suite.

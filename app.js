@@ -11,75 +11,11 @@ const {
   taskMetadata,
   undoLastWaypoint
 } = window.AnnotationModel;
+const { annotationSets } = window.AnnotationSets;
 
 const API =
   'https://anycors.sirstoke.me/' +
   'https://postgrest.sirstoke.me/map_annotations';
-
-const TALE_VIDEO = 'https://www.youtube.com/watch?v=CrcdZyqoDkc';
-const youtubeSourceAt = (timestamp, seconds) => ({
-  label: 'YouTube',
-  detail: timestamp,
-  url: `${TALE_VIDEO}&t=${seconds}s`
-});
-
-// Add another object for each map revision, hero, and mode combination.
-const annotationSets = [
-  {
-    mapId: 'blizzard-world',
-    mapVersion: '2025-11-18',
-    mapName: 'Blizzard World',
-    mapImage: './maps/blizzard-world-2025-11-18.webp',
-    heroId: 'cassidy',
-    heroName: 'Cassidy',
-    modeId: 'attack',
-    modeName: 'Attack',
-    tasks: [
-      ['a-main-entry', 'Click the Point A main choke.', youtubeSourceAt('2:12:53', 7973)],
-      [
-        'a-left-mega-door',
-        'Click the doorway where the bottom-left mega route opens toward the Point A choke.',
-        youtubeSourceAt('2:27:45', 8865)
-      ],
-      [
-        'a-left-mega-room-entry',
-        'Click the bottom-left staircase leading into the mega room.',
-        youtubeSourceAt('2:13:05', 7985)
-      ],
-      [
-        'a-right-rotation-entry',
-        'Click where the right-side rotation leaves the Point A choke.',
-        youtubeSourceAt('2:13:54', 8034)
-      ],
-      [
-        'a-right-rotation-route',
-        'Trace the right-side rotation from the Point A choke toward the right-side high ground.',
-        youtubeSourceAt('2:13:54', 8034),
-        { kind: 'route', minPoints: 2 }
-      ],
-      [
-        'a-right-high-ground',
-        'Click the right-side high ground above the Point A choke.',
-        youtubeSourceAt('2:14:00', 8040)
-      ],
-      [
-        'a-roll-tech-landing',
-        'Click the roll-tech destination on the right-side high ground.',
-        youtubeSourceAt('2:14:07', 8047)
-      ],
-      [
-        'a-right-mega-entry',
-        'Click the stairs leading down to the right-side mega flank.',
-        youtubeSourceAt('2:15:05', 8105)
-      ],
-      [
-        'a-right-mega-flank',
-        'Click the mega-flank position reached after dropping down the stairs.',
-        youtubeSourceAt('2:15:08', 8108)
-      ]
-    ]
-  }
-];
 
 const ui = {
   map: document.querySelector('#map-select'),
@@ -256,7 +192,7 @@ function rowsUrl() {
 }
 
 function loadImage() {
-  ui.image.alt = `${activeSet.mapName} overhead map`;
+  ui.image.alt = `${activeSet.mapName} map image`;
   return new Promise((resolve, reject) => {
     ui.image.onload = resolve;
     ui.image.onerror = () => reject(new Error('Map image failed to load.'));
